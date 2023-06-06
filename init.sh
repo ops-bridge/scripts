@@ -20,3 +20,18 @@ sudo wget https://github.com/mikefarah/yq/releases/download/v4.2.0/yq_linux_amd6
 # Disable Automatic Upgrades
 
 sudo sed -i 's/APT::Periodic::Unattended-Upgrade "0";/APT::Periodic::Unattended-Upgrade "1";/g' /etc/apt/apt.conf.d/20auto-upgrades
+
+# Change NTP Servers
+
+sudo sed -i 's/NTP=ntp01.arabam.com/NTP=0.tr.pool.ntp.org/g' /etc/systemd/timesyncd.conf
+sudo sed -i 's/FallbackNTP=ntp02.arabam.com/NTP=1.tr.pool.ntp.org/g' /etc/systemd/timesyncd.conf
+
+# Restart Timesync Service On Ubuntu Server
+
+sudo systemctl restart systemd-timesyncd
+
+# Disable Swap Space On OS
+
+sudo swapoff -a
+sudo rm /swap.img
+sudo sed -i 's//swap.img/#/swap.img/g' /etc/fstab
