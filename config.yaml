@@ -19,7 +19,7 @@ spec:
   controlPlaneEndpoint:
     internalLoadbalancer: haproxy #Internal loadbalancer for apiservers. [Default: ""]
     domain: lb.opsbridge.local
-    address: "10.120.60.41"      # The IP address of your load balancer.
+    address: ""      # The IP address of your load balancer.
     port: 6443
   system:
     ntpServers: #  The ntp servers of chrony.
