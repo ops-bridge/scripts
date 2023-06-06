@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-./kk delete cluster
+./kk delete cluster -y
