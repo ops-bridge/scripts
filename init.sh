@@ -4,7 +4,7 @@
 
 sudo apt update
 sudo apt upgrade -y
-sudo apt install vim wget git net-tools telnet curl nload socat conntrack -y
+sudo apt install vim wget git net-tools telnet curl nload socat conntrack chrony -y
 sudo timedatectl set-timezone Europe/Istanbul
 sudo hostnamectl set-hostname tenant-opsbridge01
 
