@@ -54,3 +54,9 @@ curl -sfL https://get-kk.kubesphere.io | VERSION=v3.0.7 sh -
 chmod +x kk
 ./kk version --show-supported-k8s
 ./kk create cluster --with-kubernetes v1.24.9 --with-kubesphere v3.3.2 --container-manager containerd
+
+# Install bash-completion
+
+sudo apt-get install bash-completion -y
+echo 'source <(kubectl completion bash)' >>~/.bashrc
+kubectl completion bash >/etc/bash_completion.d/kubectl
