@@ -53,7 +53,7 @@ sudo systemctl restart containerd
 curl -sfL https://get-kk.kubesphere.io | VERSION=v3.0.7 sh -
 chmod +x kk
 ./kk version --show-supported-k8s
-echo yes | ./kk create cluster -f config.yaml
+echo yes | ./kk create cluster --with-kubernetes v1.24.9 --with-kubesphere v3.3.2 --container-manager containerd
 
 # Install bash-completion
 
