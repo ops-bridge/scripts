@@ -130,9 +130,9 @@ spec:
     #   replicas: 1
     #   resources: {}
   auditing:                # Provide a security-relevant chronological set of records，recording the sequence of activities happening on the platform, initiated by different tenants.
-    enabled: true         # Enable or disable the KubeSphere Auditing Log System. 
+    enabled: false         # Enable or disable the KubeSphere Auditing Log System. 
   devops:                  # (CPU: 0.47 Core, Memory: 8.6 G) Provide an out-of-the-box CI/CD system based on Jenkins, and automated workflow tools including Source-to-Image & Binary-to-Image.
-    enabled: true             # Enable or disable the KubeSphere DevOps System.
+    enabled: false             # Enable or disable the KubeSphere DevOps System.
     jenkinsMemoryLim: 2Gi      # Jenkins memory limit.
     jenkinsMemoryReq: 1500Mi   # Jenkins memory request.
     jenkinsVolumeSize: 8Gi     # Jenkins volume size.
@@ -140,17 +140,17 @@ spec:
     jenkinsJavaOpts_Xmx: 512m
     jenkinsJavaOpts_MaxRAM: 2g
   events:                  # Provide a graphical web console for Kubernetes Events exporting, filtering and alerting in multi-tenant Kubernetes clusters.
-    enabled: true         # Enable or disable the KubeSphere Events System.
+    enabled: false         # Enable or disable the KubeSphere Events System.
     ruler:
       enabled: true
       replicas: 2
   logging:                 # (CPU: 57 m, Memory: 2.76 G) Flexible logging functions are provided for log query, collection and management in a unified console. Additional log collectors can be added, such as Elasticsearch, Kafka and Fluentd.
-    enabled: true         # Enable or disable the KubeSphere Logging System.
+    enabled: false         # Enable or disable the KubeSphere Logging System.
     logsidecar:
       enabled: true
       replicas: 2
   metrics_server:                    # (CPU: 56 m, Memory: 44.35 MiB) It enables HPA (Horizontal Pod Autoscaler).
-    enabled: true                   # Enable or disable metrics-server.
+    enabled: false                   # Enable or disable metrics-server.
   monitoring:
     storageClass: ""                 # If there is an independent StorageClass you need for Prometheus, you can specify it here. The default StorageClass is used by default.
     # prometheusReplicas: 1          # Prometheus replicas are responsible for monitoring different segments of data source and providing high availability.
