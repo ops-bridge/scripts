@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# curl https://raw.githubusercontent.com/ops-bridge/scripts/main/init.sh | bash -s
 # Update OS
 
 sudo apt update
@@ -16,19 +15,13 @@ sudo resize2fs /dev/ubuntu-vg/ubuntu-lv
 
 # Disable Automatic Upgrades
 
-sudo sed -i 's/APT::Periodic::Unattended-Upgrade "0";/APT::Periodic::Unattended-Upgrade "1";/g' /etc/apt/apt.conf.d/20auto-upgrades
+sudo sed -i 's/APT::Periodic::Unattended-Upgrade "1";/APT::Periodic::Unattended-Upgrade "0";/g' /etc/apt/apt.conf.d/20auto-upgrades
 
 # Change NTP Servers
 
 sudo sed -i 's/NTP=ntp01.arabam.com/NTP=0.tr.pool.ntp.org/g' /etc/systemd/timesyncd.conf
-sudo sed -i 's/FallbackNTP=ntp02.arabam.com/NTP=1.tr.pool.ntp.org/g' /etc/systemd/timesyncd.conf
+sudo sed -i 's/FallbackNTP=ntp02.arabam.com/FallbackNTP=1.tr.pool.ntp.org/g' /etc/systemd/timesyncd.conf
 
 # Restart Timesync Service On Ubuntu Server
 
 sudo systemctl restart systemd-timesyncd
-
-# Disable Swap Space On OS
-
-sudo swapoff -a
-sudo rm /swap.img
-sudo sed -i 's//swap.img/#/swap.img/g' /etc/fstab
