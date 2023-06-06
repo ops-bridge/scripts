@@ -25,3 +25,4 @@ sudo sed -i 's/FallbackNTP=ntp02.arabam.com/FallbackNTP=1.tr.pool.ntp.org/g' /et
 # Restart Timesync Service On Ubuntu Server
 
 sudo systemctl restart systemd-timesyncd
+sudo apt autoremove -y
