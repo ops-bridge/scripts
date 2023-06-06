@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# curl https://raw.githubusercontent.com/ops-bridge/scripts/main/init.sh | bash -s
 # Update OS
 
 sudo apt update
