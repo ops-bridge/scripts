@@ -1,5 +1,5 @@
 #!/bin/bash
 
-apt update
-apt upgrade -y
-apt install vim wget git net-tools telnet curl nload -y
+apt-get update
+apt-get upgrade -y
+apt-get install vim wget git net-tools telnet curl nload -y
