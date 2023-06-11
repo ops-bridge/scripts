@@ -61,6 +61,11 @@ EOF
             bash ./get-helm-3 
             helm version 
             git clone https://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@github.com/ops-bridge/appcatalog.git
+            helm repo add opsbridge https://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@raw.githubusercontent.com/ops-bridge/appcatalog/main/charts/
+            helm repo update
+            helm search repo opsbridge
+            helm upgrade opsbridge/argo-cd --install argocd --set global.fullnameOverride=argocd --set server.url="https://argocd.example.com" --set server.ingress.enabled=true --set server.ingress.hostname=argocd.example.com --set server.ingress.extraTls[0].hosts[0]=argocd.example.com --set server.ingress.extraTls[0].secretName=tenant-ssl-cert --set server.ingressClassName=nginx --set config.argocdServerAdminPassword=1q2w3e4r --namespace argocd --create-namespace --wait
+            helm upgrade opsbridge/opsbridge --install opsbridge --set global.fullnameOverride=opsbridge --set server.ingress.enabled=true --set server.ingress.hostname=opsbridge.example.com --set server.ingress.tls[0].hosts[0]=opsbridge.example.com --set server.ingress.tls[0].secretName=tenant-ssl-cert --set server.ingressClassName=nginx --namespace opsbridge --create-namespace --wait
             ;;
         "Quit")
             break
