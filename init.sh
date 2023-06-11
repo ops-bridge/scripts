@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PS3='Please enter your choice: '
-options=("Prepare Operating System" "Install Containerd Runtime" "Install Kubernetes" "Uninstall Kubernetes" "Install Helm Toolkit" "Deploy OpsBridge" "Quit")
+options=("Prepare Operating System" "Install Containerd Runtime" "Install Kubernetes" "Uninstall Kubernetes" "Deploy OpsBridge" "Quit")
 select opt in "${options[@]}"
 do
     case $opt in
@@ -56,12 +56,10 @@ EOF
         "Uninstall Kubernetes")
             echo yes | ./kk delete cluster
             ;;
-        "Install Helm Toolkit")
+        "Deploy OpsBridge")
             curl -O https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
             bash ./get-helm-3 
             helm version 
-            ;;
-        "Deploy OpsBridge")
             git clone https://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@github.com/ops-bridge/appcatalog.git
             ;;
         "Quit")
