@@ -60,7 +60,8 @@ EOF
             curl -O https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
             bash ./get-helm-3 
             helm version 
-            echo $1 | helm repo add opsbridge --username ops-bridge https://raw.githubusercontent.com/ops-bridge/appcatalog/main/charts/
+            export GH="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"
+            echo $GH | helm repo add opsbridge --username ops-bridge https://raw.githubusercontent.com/ops-bridge/appcatalog/main/charts/
             helm repo update
             helm search repo opsbridge
             helm upgrade opsbridge/argo-cd --install argocd --set global.fullnameOverride=argocd --set server.url="https://argocd.example.com" --set server.ingress.enabled=true --set server.ingress.hostname=argocd.example.com --set server.ingress.extraTls[0].hosts[0]=argocd.example.com --set server.ingress.extraTls[0].secretName=tenant-ssl-cert --set server.ingressClassName=nginx --set config.argocdServerAdminPassword=1q2w3e4r --namespace argocd --create-namespace --wait
