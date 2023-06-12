@@ -1,4 +1,14 @@
 #!/bin/bash
+read -p "SSLSecreName: " ssl_secret_name
+read -p "ArgoCD.URL: " argocd_url
+read -p "ArgoCD.Hostname: " argocd_hostname
+read -p "ArgoCD.AdminPassword: " argocd_admin_password
+read -p "OpsBridge.URL: " opsbridge_url
+read -p "NginxIngress.LoadBalancerIP: " nginx_ingress_lb_ip
+read -p "PostgreSQL.Password: " postgresql_password
+read -p "PostgreSQL.LoadBalancerIP: " postgresql_lb_ip
+
+echo "You entered $argocd_url"
 
 PS3='Welcome to OpsBridge Installation: '
 options=("Prepare Operating System" "Install Containerd Runtime" "Install Kubernetes" "Uninstall Kubernetes" "Deploy OpsBridge" "Quit")
@@ -63,11 +73,11 @@ EOF
             helm repo add opsbridge --username ops-bridge https://raw.githubusercontent.com/ops-bridge/appcatalog/main/charts/
             helm repo update
             helm search repo opsbridge
-            helm upgrade opsbridge/argo-cd --install argocd --set global.fullnameOverride=argocd --set server.url="https://argocd.example.com" --set server.ingress.enabled=true --set server.ingress.hostname=argocd.example.com --set server.ingress.extraTls[0].hosts[0]=argocd.example.com --set server.ingress.extraTls[0].secretName=tenant-ssl-cert --set server.ingressClassName=nginx --set config.argocdServerAdminPassword=1q2w3e4r --namespace argocd --create-namespace --wait
-            helm upgrade opsbridge/opsbridge --install opsbridge --set global.fullnameOverride=opsbridge --set server.ingress.enabled=true --set server.ingress.hostname=opsbridge.example.com --set server.ingress.tls[0].hosts[0]=opsbridge.example.com --set server.ingress.tls[0].secretName=tenant-ssl-cert --set server.ingressClassName=nginx --namespace opsbridge --create-namespace --wait
+            helm upgrade opsbridge/argo-cd --install argocd --set server.url=$argocd_url --set server.ingress.enabled=true --set server.ingress.hostname=$argocd_url --set server.ingress.extraTls[0].hosts[0]=$argocd_url --set server.ingress.extraTls[0].secretName=$ssl_secret_name --set server.ingressClassName=nginx --set config.argocdServerAdminPassword=$argocd_admin_password --namespace argocd --create-namespace --wait
+            helm upgrade opsbridge/opsbridge --install opsbridge --set server.ingress.enabled=true --set server.ingress.hostname=$opsbridge_url --set server.ingress.tls[0].hosts[0]=$opsbridge_url --set server.ingress.tls[0].secretName=$ssl_secret_name --set server.ingressClassName=nginx --namespace opsbridge --create-namespace --wait
             helm upgrade opsbridge/metallb --install metallb --namespace metallb-system --create-namespace --wait
-            helm upgrade opsbridge/ingress-nginx --install ingress-nginx --set controller.hostNetwork=true --set controller.hostPort.enabled=true --set controller.ingressClassResource.name=nginx --set controller.ingressClassResource.enabled=true --set controller.extraArgs.default-ssl-certificate=default/ssl-cert --set controller.kind=DaemonSet --set controller.service.enabled=true --set controller.service.loadBalancerIP="10.100.11.176" --set controller.service.externalTrafficPolicy=Local --set controller.service.type=LoadBalancer --namespace ingress-nginx --create-namespace --wait
-            helm upgrade opsbridge/postgresql --install postgresql --set global.postgresql.auth.postgresPassword="1q2w3e4r" --set global.postgresql.auth.username=opsbridge --set global.postgresql.auth.password="1q2w3e4r" --set clusterDomain=shared-cluster --set image.auth.enablePostgresUser=true --set image.auth.postgresPassword="1q2w3e4r" --set architecture=standalone --set primary.service.type=LoadBalancer --set primary.service.loadBalancerIP="10.120.11.69" --set primary.service.externalTrafficPolicy=Local --set primary.persistence.enabled=true --set primary.persistence.size="13Gi" --set primary.initdb.user=postgres --set primary.initdb.password="1q2w3e4r" --namespace opsbridge --create-namespace --wait
+            helm upgrade opsbridge/ingress-nginx --install ingress-nginx --set controller.hostNetwork=true --set controller.hostPort.enabled=true --set controller.ingressClassResource.name=nginx --set controller.ingressClassResource.enabled=true --set controller.extraArgs.default-ssl-certificate=default/$ssl_secret_name --set controller.kind=DaemonSet --set controller.service.enabled=true --set controller.service.loadBalancerIP=$nginx_ingress_lb_ip --set controller.service.externalTrafficPolicy=Local --set controller.service.type=LoadBalancer --namespace ingress-nginx --create-namespace --wait
+            helm upgrade opsbridge/postgresql --install postgresql --set global.postgresql.auth.postgresPassword=$postgresql_password --set global.postgresql.auth.username=opsbridge --set global.postgresql.auth.password=$postgresql_password --set image.auth.enablePostgresUser=true --set image.auth.postgresPassword=$postgresql_password --set architecture=standalone --set primary.service.type=LoadBalancer --set primary.service.loadBalancerIP=$postgresql_lb_ip --set primary.service.externalTrafficPolicy=Local --set primary.persistence.enabled=true --set primary.persistence.size="10Gi" --set primary.initdb.user=postgres --set primary.initdb.password=$postgresql_password --namespace opsbridge --create-namespace --wait
             ;;
         "Quit")
             break
