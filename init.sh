@@ -1,4 +1,6 @@
 #!/bin/bash
+
+echo "Please fill the required areas for AIO OpdBridge Installation"
 read -p "SSLSecreName: " ssl_secret_name
 read -p "ArgoCD.URL: " argocd_url
 read -p "ArgoCD.Hostname: " argocd_hostname
@@ -7,8 +9,6 @@ read -p "OpsBridge.URL: " opsbridge_url
 read -p "NginxIngress.LoadBalancerIP: " nginx_ingress_lb_ip
 read -p "PostgreSQL.Password: " postgresql_password
 read -p "PostgreSQL.LoadBalancerIP: " postgresql_lb_ip
-
-echo "You entered $argocd_url"
 
 PS3='Welcome to OpsBridge Installation: '
 options=("Prepare Operating System" "Install Containerd Runtime" "Install Kubernetes" "Uninstall Kubernetes" "Deploy OpsBridge" "Quit")
