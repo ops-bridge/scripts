@@ -55,15 +55,15 @@ EOF
             ;;
         "Deploy OpsBridge")
             echo "Please fill the required areas for AIO OpdBridge Installation"
-            read -p "SSLSecreName: " ssl_secret_name
-            read -p "StorageClass: " storage_class
-            read -p "ArgoCD.URL: " argocd_url
-            read -p "ArgoCD.Hostname: " argocd_hostname
-            read -p "ArgoCD.AdminPassword: " argocd_admin_password
-            read -p "OpsBridge.URL: " opsbridge_url
-            read -p "NginxIngress.LoadBalancerIP: " nginx_ingress_lb_ip
-            read -p "PostgreSQL.Password: " postgresql_password
-            read -p "PostgreSQL.LoadBalancerIP: " postgresql_lb_ip
+            read -e -p "SSLSecreName: " -i "ssl-cert" ssl_secret_name
+            read -e -p "StorageClass : " -i "local" storage_class
+            read -e -p "ArgoCD.URL: " -i "https://cd.example.com" argocd_url
+            read -e -p "ArgoCD.Hostname: " -i "cd.example.com" argocd_hostname
+            read -e -p "ArgoCD.AdminPassword: " -i "StrongPassword!@" argocd_admin_password
+            read -e -p "OpsBridge.URL: " -i "opsbridge.example.com" opsbridge_url
+            read -e -p "NginxIngress.LoadBalancerIP: " -i "10.120.60.41" nginx_ingress_lb_ip
+            read -e -p "PostgreSQL.Password: " -i "StrongPassword!@" postgresql_password
+            read -e -p "PostgreSQL.LoadBalancerIP: " -i "10.120.60.42" postgresql_lb_ip
             curl -O https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
             bash ./get-helm-3 
             helm version 
