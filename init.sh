@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PS3='Welcome to OpsBridge Installation: '
-options=("Prepare Operating System" "Install Containerd Runtime" "Install Kubernetes" "Uninstall Kubernetes" "Deploy OpsBridge" "Quit")
+options=("Prepare Operating System" "Install Containerd Runtime" "Install Kubernetes" "Deploy OpsBridge" "Uninstall OpsBridge" "Uninstall Kubernetes" "Quit")
 select opt in "${options[@]}"
 do
     case $opt in
@@ -53,9 +53,6 @@ EOF
             echo 'source <(kubectl completion bash)' >>~/.bashrc
             kubectl completion bash >/etc/bash_completion.d/kubectl
             ;;
-        "Uninstall Kubernetes")
-            echo yes | ./kk delete cluster
-            ;;
         "Deploy OpsBridge")
             echo "Please fill the required areas for AIO OpdBridge Installation"
             read -p "SSLSecreName: " ssl_secret_name
@@ -79,6 +76,16 @@ EOF
             helm upgrade --install ingress-nginx opsbridge/ingress-nginx --set controller.hostNetwork=true --set controller.hostPort.enabled=true --set controller.ingressClassResource.name=nginx --set controller.ingressClassResource.enabled=true --set controller.extraArgs.default-ssl-certificate=default/$ssl_secret_name --set controller.kind=DaemonSet --set controller.service.enabled=true --set controller.service.loadBalancerIP=$nginx_ingress_lb_ip --set controller.service.externalTrafficPolicy=Local --set controller.service.type=LoadBalancer --namespace ingress-nginx --create-namespace --wait
             helm upgrade --install postgresql opsbridge/postgresql --set global.postgresql.auth.postgresPassword=$postgresql_password --set global.storageClass=$storage_class --set global.postgresql.auth.username=opsbridge --set global.postgresql.auth.password=$postgresql_password --set image.auth.enablePostgresUser=true --set image.auth.postgresPassword=$postgresql_password --set architecture=standalone --set primary.service.type=LoadBalancer --set primary.service.loadBalancerIP=$postgresql_lb_ip --set primary.service.externalTrafficPolicy=Local --set primary.persistence.enabled=true --set primary.persistence.size="10Gi" --set primary.initdb.user=postgres --set primary.initdb.password=$postgresql_password --namespace opsbridge --create-namespace --wait
             ;;
+        "Uninstall OpsBridge")
+            helm uninstall argocd -n argocd
+            helm uninstall opsbridge -n opsbridge
+            helm uninstall postgresql -n opsbridge
+            helm uninstall metallb -n metallb-system
+            helm uninstall ingress-nginx -n ingress-nginx
+            ;;
+        "Uninstall Kubernetes")
+            echo yes | ./kk delete cluster
+            ;;            
         "Quit")
             break
             ;;
