@@ -73,6 +73,7 @@ EOF
             ### MetalLB Deployment ###
             helm upgrade --install metallb opsbridge/metallb --namespace metallb-system --create-namespace --wait
             git clone https://ops-bridge@github.com/ops-bridge/scripts.git
+            cd scripts
             kubectl apply -f ./metallb/config.yaml
             ### Load Balancer Deployment ###
             helm upgrade --install ingress-nginx opsbridge/ingress-nginx --set controller.hostNetwork=true --set controller.hostPort.enabled=true --set controller.ingressClassResource.name=nginx --set controller.ingressClassResource.enabled=true --set controller.extraArgs.default-ssl-certificate=default/$ssl_secret_name --set controller.kind=DaemonSet --set controller.service.enabled=true --set controller.service.loadBalancerIP=$nginx_ingress_lb_ip --set controller.service.externalTrafficPolicy=Local --set controller.service.type=LoadBalancer --namespace ingress-nginx --create-namespace --wait
