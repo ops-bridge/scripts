@@ -70,11 +70,27 @@ EOF
             helm repo add opsbridge --username ops-bridge https://raw.githubusercontent.com/ops-bridge/appcatalog/main/charts/
             helm repo update
             helm search repo opsbridge
+            ### MetalLB Deployment ###
             helm upgrade --install metallb opsbridge/metallb --namespace metallb-system --create-namespace --wait
+            git clone https://ops-bridge@github.com/ops-bridge/scripts.git
+            kubectl apply -f /etc/metallb.yaml
+            ### Load Balancer Deployment ###
             helm upgrade --install ingress-nginx opsbridge/ingress-nginx --set controller.hostNetwork=true --set controller.hostPort.enabled=true --set controller.ingressClassResource.name=nginx --set controller.ingressClassResource.enabled=true --set controller.extraArgs.default-ssl-certificate=default/$ssl_secret_name --set controller.kind=DaemonSet --set controller.service.enabled=true --set controller.service.loadBalancerIP=$nginx_ingress_lb_ip --set controller.service.externalTrafficPolicy=Local --set controller.service.type=LoadBalancer --namespace ingress-nginx --create-namespace --wait
+            ### ExternalSecrets Deployment ###
+            helm upgrade --install external-secrets opsbridge/external-secrets --namespace external-secrets --create-namespace --wait
+            ### ArgoCD Deployment ###
             helm upgrade --install argocd opsbridge/argo-cd --set server.url=$argocd_url --set server.ingress.enabled=true --set global.storageClass=$storage_class --set server.ingress.hostname=$argocd_hostname --set server.ingress.extraTls[0].hosts[0]=$argocd_hostname --set server.ingress.extraTls[0].secretName=$ssl_secret_name --set server.ingressClassName=nginx --set config.secret.argocdServerAdminPassword=$argocd_admin_password --namespace argocd --create-namespace --wait
-            helm upgrade --install opsbridge opsbridge/opsbridge --set server.ingress.enabled=true --set server.ingress.hostname=$opsbridge_url --set server.ingress.tls[0].hosts[0]=$opsbridge_url --set server.ingress.tls[0].secretName=$ssl_secret_name --set server.ingressClassName=nginx --namespace opsbridge --create-namespace --wait
+            ### Database Deployment ###
             helm upgrade --install postgresql opsbridge/postgresql --set global.postgresql.auth.postgresPassword=$postgresql_password --set global.storageClass=$storage_class --set global.postgresql.auth.username=opsbridge --set global.postgresql.auth.password=$postgresql_password --set image.auth.enablePostgresUser=true --set image.auth.postgresPassword=$postgresql_password --set architecture=standalone --set primary.service.type=LoadBalancer --set primary.service.loadBalancerIP=$postgresql_lb_ip --set primary.service.externalTrafficPolicy=Local --set primary.persistence.enabled=true --set primary.persistence.size="10Gi" --set primary.initdb.user=postgres --set primary.initdb.password=$postgresql_password --namespace opsbridge --create-namespace --wait
+            ### GitLab Deployment ###
+            ### Consul Deployment ###
+            ### Vault Deployment ####
+            ### Jenkins Deployment ###
+            ### Keycloak Deployment ###
+            ### Prometheus Deployment ###
+            ### Sonarqube Deployment ###
+            ### OpsBridge Deployment ###
+            #helm upgrade --install opsbridge opsbridge/opsbridge --set server.ingress.enabled=true --set server.ingress.hostname=$opsbridge_url --set server.ingress.tls[0].hosts[0]=$opsbridge_url --set server.ingress.tls[0].secretName=$ssl_secret_name --set server.ingressClassName=nginx --namespace opsbridge --create-namespace --wait
             ;;
         "Uninstall OpsBridge")
             helm uninstall argocd -n argocd
