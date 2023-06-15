@@ -64,32 +64,44 @@ EOF
             read -e -p "NginxIngress.LoadBalancerIP: " -i "10.120.60.41" nginx_ingress_lb_ip
             read -e -p "PostgreSQL.Password: " -i "StrongPassword!@" postgresql_password
             read -e -p "PostgreSQL.LoadBalancerIP: " -i "10.120.60.42" postgresql_lb_ip
+            read -e -p "VaultToken: " -i "hvs.wnDB32qSs0FXqQkDBGw8AtC5" vault_token
+            read -e -p "Keycloak.Password: " -i "StrongPassword!@" keycloak_password
+            read -e -p "Keycloak.Hostname: " -i "accounts.example.com" keycloak_hostname
             curl -O https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
             bash ./get-helm-3 
             helm version 
             helm repo add opsbridge --username ops-bridge https://raw.githubusercontent.com/ops-bridge/appcatalog/main/charts/
             helm repo update
             helm search repo opsbridge
-            ### MetalLB Deployment ###
+            ### MetalLB Deployment - PASSED ###
             helm upgrade --install metallb opsbridge/metallb --namespace metallb-system --create-namespace --wait
             git clone https://ops-bridge@github.com/ops-bridge/scripts.git
             cd scripts
             git fetch --all
             git pull
             kubectl apply -f ./metallb/config.yaml
-            ### Load Balancer Deployment ###
+            ### Load Balancer Deployment - PASSED ###
             helm upgrade --install ingress-nginx opsbridge/ingress-nginx --set controller.hostNetwork=true --set controller.hostPort.enabled=true --set controller.ingressClassResource.name=nginx --set controller.ingressClassResource.enabled=true --set controller.extraArgs.default-ssl-certificate=default/$ssl_secret_name --set controller.kind=DaemonSet --set controller.service.enabled=true --set controller.service.loadBalancerIP=$nginx_ingress_lb_ip --set controller.service.externalTrafficPolicy=Local --set controller.service.type=LoadBalancer --namespace ingress-nginx --create-namespace --wait
-            ### ExternalSecrets Deployment ###
+            ### ExternalSecrets Deployment - PASSED ###
             helm upgrade --install external-secrets opsbridge/external-secrets --namespace external-secrets --create-namespace --wait
-            ### ArgoCD Deployment ###
+            kubectl create secret generic vault-token --from-literal=token=$vault_token -n argocd
+            git clone https://ops-bridge@github.com/ops-bridge/scripts.git
+            cd scripts
+            git fetch --all
+            git pull
+            kubectl apply -f ./vault/clustersecretstore.yaml
+            ### ArgoCD Deployment - PASSED ###
             helm upgrade --install argocd opsbridge/argo-cd --set server.url=$argocd_url --set server.ingress.enabled=true --set global.storageClass=$storage_class --set server.ingress.hostname=$argocd_hostname --set server.ingress.extraTls[0].hosts[0]=$argocd_hostname --set server.ingress.extraTls[0].secretName=$ssl_secret_name --set server.ingressClassName=nginx --set config.secret.argocdServerAdminPassword=$argocd_admin_password --namespace argocd --create-namespace --wait
-            ### Database Deployment ###
+            ### Database Deployment - PASSED ###
             helm upgrade --install postgresql opsbridge/postgresql --set global.postgresql.auth.postgresPassword=$postgresql_password --set global.storageClass=$storage_class --set global.postgresql.auth.username=opsbridge --set global.postgresql.auth.password=$postgresql_password --set image.auth.enablePostgresUser=true --set image.auth.postgresPassword=$postgresql_password --set architecture=standalone --set primary.service.type=LoadBalancer --set primary.service.loadBalancerIP=$postgresql_lb_ip --set primary.service.externalTrafficPolicy=Local --set primary.persistence.enabled=true --set primary.persistence.size="10Gi" --set primary.initdb.user=postgres --set primary.initdb.password=$postgresql_password --namespace opsbridge --create-namespace --wait
+            ### Keycloak Deployment ###
+            helm upgrade --install keycloak opsbridge/keycloak --set global.storageClass=$storage_class --set auth.adminUser=keycloak --set auth.adminPassword=$keycloak_password --set ingress.hostname=$keycloak_hostname --set ingress.extraTls[0].hosts[0]=$keycloak_hostname --set ingress.extraTls[0].secretName=$ssl_secret_name --set externalDatabase.host=postgresql --set externalDatabase.port=5432 --set externalDatabase.user=postgres --set externalDatabase.database=keycloak --set externalDatabase.password=$postgresql_password --namespace opsbridge --create-namespace --wait
             ### GitLab Deployment ###
             ### Consul Deployment ###
+            helm upgrade --install consul opsbridge/consul --set server.storageClass=$storage_class --set ui.ingress.hosts[0].host=$consul_hostname --set ui.ingress.tls[0].hosts[0]=$consul_hostname --set ui.ingress.tls[0].secretName=$ssl_secret_name --namespace opsbridge --create-namespace --wait
             ### Vault Deployment ####
+            helm upgrade --install vault opsbridge/vault --set global.storageClass=$storage_class --set server.ingress.extraTls[0].hosts[0]=$vault_hostname --set server.ingress.extraTls[0].secretName=$ssl_secret_name --set server.ingress.hostname=$vault_hostname --namespace opsbridge --create-namespace --wait
             ### Jenkins Deployment ###
-            ### Keycloak Deployment ###
             ### Prometheus Deployment ###
             ### Sonarqube Deployment ###
             ### OpsBridge Deployment ###
@@ -100,6 +112,7 @@ EOF
             helm uninstall opsbridge -n opsbridge
             helm uninstall postgresql -n opsbridge
             helm uninstall metallb -n metallb-system
+            helm uninstall external-secrets -n external-secrets
             helm uninstall ingress-nginx -n ingress-nginx
             ;;
         "Uninstall Kubernetes")
