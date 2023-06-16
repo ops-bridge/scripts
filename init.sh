@@ -73,7 +73,7 @@ EOF
             read -e -p "Keycloak.Hostname: " -i "accounts.tenant.com" keycloak_hostname
             read -e -p "Vault.URL: " -i "https://vault.tenant.com" vault_url
             read -e -p "Vault.Hostname: " -i "vault.tenant.com" vault_hostname
-            read -e -p "Consul.Hostname: " -i "https://consul.tenant.com" consul_hostname
+            read -e -p "Consul.Hostname: " -i "consul.tenant.com" consul_hostname
             curl -O https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
             bash ./get-helm-3 
             helm version 
