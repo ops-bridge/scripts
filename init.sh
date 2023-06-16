@@ -28,7 +28,7 @@ helm repo update
 helm search repo opsbridge
 
 PS3='Welcome to OpsBridge Installation: '
-options=("Prepare Operating System" "Install Containerd Runtime" "Install Kubernetes" "Install MetalLB" "Install LoadBalancer" "Install ExternalSecrets" "Install CrossPlane" "Install Providers" "Install ArgoCD" "Install Database" "Install Keycloak" "Install Consul" "Install Vault" "Install Prometheus" "Deploy OpsBridge" "Uninstall OpsBridge" "Uninstall Kubernetes" "Quit")
+options=("Prepare Operating System" "Install Containerd Runtime" "Install Kubernetes" "Install MetalLB" "Install LoadBalancer" "Install ExternalSecrets" "Install CrossPlane" "Install ArgoCD" "Install Database" "Install Keycloak" "Install Consul" "Install Vault" "Install Prometheus" "Install Providers" "Deploy OpsBridge" "Uninstall OpsBridge" "Uninstall Kubernetes" "Quit")
 select opt in "${options[@]}"
 do
     case $opt in
