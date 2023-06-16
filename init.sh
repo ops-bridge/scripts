@@ -74,6 +74,8 @@ EOF
             read -e -p "Vault.URL: " -i "https://vault.tenant.com" vault_url
             read -e -p "Vault.Hostname: " -i "vault.tenant.com" vault_hostname
             read -e -p "Consul.Hostname: " -i "consul.tenant.com" consul_hostname
+            read -e -p "Prometheus.Hostname: " -i "prometheus.tenant.com" prometheus_hostname
+            read -e -p "Alertmanager.Hostname: " -i "alertmanager.tenant.com" alertmanager_hostname
             curl -O https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
             bash ./get-helm-3 
             helm version 
@@ -117,6 +119,7 @@ EOF
             helm upgrade --install vault opsbridge/vault --set global.storageClass=$storage_class --set server.ingress.extraTls[0].hosts[0]=$vault_hostname --set server.ingress.extraTls[0].secretName=$ssl_secret_name --set server.ingress.hostname=$vault_hostname --namespace opsbridge --create-namespace --wait
             ### Jenkins Deployment ###
             ### Prometheus Deployment ###
+            helm upgrade --install prometheus opsbridge/prometheus --set server.baseURL=$prometheus_hostname --set server.ingress.hosts[0]=$prometheus_hostname --set server.ingress.tls[0].hosts[0]=$prometheus_hostname --set server.ingress.tls[0].secretName=$ssl_secret_name --set server.persistentVolume.enabled=true --set server.persistentVolume.size=12Gi --set server.persistentVolume.storageClass=$storage_class --set alertmanager.enabled=true --set alertmanager.persistence.size=3Gi  --set alertmanager.ingress.hosts[0]=$alertmanager_hostname --set alertmanager.ingress.tls[0].secretName=$secret_name --set alertmanager.ingress.tls[0].hosts[0]=$alertmanager_hostname --namespace opsbridge --create-namespace --wait
             ### Sonarqube Deployment ###
             ### OpsBridge Deployment ###
             #helm upgrade --install opsbridge opsbridge/opsbridge --set server.ingress.enabled=true --set server.ingress.hostname=$opsbridge_hostname --set server.ingress.tls[0].hosts[0]=$opsbridge_hostname --set server.ingress.tls[0].secretName=$ssl_secret_name --set server.ingressClassName=nginx --namespace opsbridge --create-namespace --wait
