@@ -134,6 +134,7 @@ EOF
             helm uninstall keycloak -n opsbridge
             helm uninstall consul -n opsbridge
             helm uninstall vault -n opsbridge
+            helm uninstall prometheus -n opsbridge
             ;;
         "Uninstall Kubernetes")
             echo yes | ./kk delete cluster
