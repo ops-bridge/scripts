@@ -1,7 +1,34 @@
 #!/bin/bash
+echo "Please fill the required areas for AIO OpdBridge Installation"
+read -e -p "SSLSecreName: " -i "ssl-cert" ssl_secret_name
+read -e -p "StorageClass : " -i "local" storage_class
+read -e -p "MetalLB.Ingress.IP : " -i "\"10.120.60.41/32"\" metallb_ingress_ip
+read -e -p "MetalLB.PostgreSQL.IP : " -i "\"10.120.60.42/32"\" metallb_postgres_ip            
+read -e -p "ArgoCD.URL: " -i "https://cd.tenant.com" argocd_url
+read -e -p "ArgoCD.Hostname: " -i "cd.tenant.com" argocd_hostname
+read -e -p "ArgoCD.AdminPassword: " -i "StrongPassword!@" argocd_admin_password
+read -e -p "OpsBridge.Hostname: " -i "opsbridge.tenant.com" opsbridge_hostname
+read -e -p "NginxIngress.LoadBalancerIP: " -i "10.120.60.41" nginx_ingress_lb_ip
+read -e -p "PostgreSQL.Password: " -i "StrongPassword!@" postgresql_password
+read -e -p "PostgreSQL.LoadBalancerIP: " -i "10.120.60.42" postgresql_lb_ip
+read -e -p "VaultToken: " -i "hvs.wnDB32qSs0FXqQkDBGw8AtC5" vault_token
+read -e -p "Keycloak.Password: " -i "StrongPassword!@" keycloak_password
+read -e -p "Keycloak.Hostname: " -i "accounts.tenant.com" keycloak_hostname
+read -e -p "Vault.URL: " -i "https://vault.tenant.com" vault_url
+read -e -p "Vault.Hostname: " -i "vault.tenant.com" vault_hostname
+read -e -p "Consul.Hostname: " -i "consul.tenant.com" consul_hostname
+read -e -p "Prometheus.Hostname: " -i "prometheus.tenant.com" prometheus_hostname
+read -e -p "Alertmanager.Hostname: " -i "alertmanager.tenant.com" alertmanager_hostname
+
+curl -O https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+bash ./get-helm-3 
+helm version 
+helm repo add opsbridge --username ops-bridge https://raw.githubusercontent.com/ops-bridge/appcatalog/main/charts/
+helm repo update
+helm search repo opsbridge
 
 PS3='Welcome to OpsBridge Installation: '
-options=("Prepare Operating System" "Install Containerd Runtime" "Install Kubernetes" "Deploy OpsBridge" "Uninstall OpsBridge" "Uninstall Kubernetes" "Quit")
+options=("Prepare Operating System" "Install Containerd Runtime" "Install Kubernetes" "Install MetalLB" "Install LoadBalancer" "Install ExternalSecrets" "Install CrossPlane" "Install Providers" "Install ArgoCD" "Install Database" "Install Keycloak" "Install Consul" "Install Vault" "Install Prometheus" "Deploy OpsBridge" "Uninstall OpsBridge" "Uninstall Kubernetes" "Quit")
 select opt in "${options[@]}"
 do
     case $opt in
@@ -55,44 +82,19 @@ EOF
             echo 'source <(kubectl completion bash)' >>~/.bashrc
             kubectl completion bash >/etc/bash_completion.d/kubectl
             ;;
-        "Deploy OpsBridge")
-            echo "Please fill the required areas for AIO OpdBridge Installation"
-            read -e -p "SSLSecreName: " -i "ssl-cert" ssl_secret_name
-            read -e -p "StorageClass : " -i "local" storage_class
-            read -e -p "MetalLB.Ingress.IP : " -i "\"10.120.60.41/32"\" metallb_ingress_ip
-            read -e -p "MetalLB.PostgreSQL.IP : " -i "\"10.120.60.42/32"\" metallb_postgres_ip
-            read -e -p "ArgoCD.URL: " -i "https://cd.tenant.com" argocd_url
-            read -e -p "ArgoCD.Hostname: " -i "cd.tenant.com" argocd_hostname
-            read -e -p "ArgoCD.AdminPassword: " -i "StrongPassword!@" argocd_admin_password
-            read -e -p "OpsBridge.Hostname: " -i "opsbridge.tenant.com" opsbridge_hostname
-            read -e -p "NginxIngress.LoadBalancerIP: " -i "10.120.60.41" nginx_ingress_lb_ip
-            read -e -p "PostgreSQL.Password: " -i "StrongPassword!@" postgresql_password
-            read -e -p "PostgreSQL.LoadBalancerIP: " -i "10.120.60.42" postgresql_lb_ip
-            read -e -p "VaultToken: " -i "hvs.wnDB32qSs0FXqQkDBGw8AtC5" vault_token
-            read -e -p "Keycloak.Password: " -i "StrongPassword!@" keycloak_password
-            read -e -p "Keycloak.Hostname: " -i "accounts.tenant.com" keycloak_hostname
-            read -e -p "Vault.URL: " -i "https://vault.tenant.com" vault_url
-            read -e -p "Vault.Hostname: " -i "vault.tenant.com" vault_hostname
-            read -e -p "Consul.Hostname: " -i "consul.tenant.com" consul_hostname
-            read -e -p "Prometheus.Hostname: " -i "prometheus.tenant.com" prometheus_hostname
-            read -e -p "Alertmanager.Hostname: " -i "alertmanager.tenant.com" alertmanager_hostname
-            curl -O https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-            bash ./get-helm-3 
-            helm version 
-            helm repo add opsbridge --username ops-bridge https://raw.githubusercontent.com/ops-bridge/appcatalog/main/charts/
-            helm repo update
-            helm search repo opsbridge
-            ### MetalLB Deployment - PASSED ###
+        "Install MetalLB")
             helm upgrade --install metallb opsbridge/metallb --namespace metallb-system --create-namespace --wait
             git clone https://ops-bridge@github.com/ops-bridge/scripts.git
             cd scripts
             git fetch --all
             git pull
             yq -i '(.. | select(has("addresses")).addresses) = ['$metallb_ingress_ip','$metallb_postgres_ip']' ./metallb/config.yaml
-            kubectl apply -f ./metallb/config.yaml
-            ### Load Balancer Deployment - PASSED ###
-            helm upgrade --install ingress-nginx opsbridge/ingress-nginx --set controller.hostNetwork=true --set controller.hostPort.enabled=true --set controller.ingressClassResource.name=nginx --set controller.ingressClassResource.enabled=true --set controller.extraArgs.default-ssl-certificate=default/$ssl_secret_name --set controller.kind=DaemonSet --set controller.service.enabled=true --set controller.service.loadBalancerIP=$nginx_ingress_lb_ip --set controller.service.externalTrafficPolicy=Local --set controller.service.type=LoadBalancer --namespace ingress-nginx --create-namespace --wait
-            ### ExternalSecrets Deployment - PASSED ###
+            kubectl apply -f ./metallb/config.yaml            
+            ;;
+        "Install LoadBalancer")
+            helm upgrade --install ingress-nginx opsbridge/ingress-nginx --set controller.hostNetwork=true --set controller.hostPort.enabled=true --set controller.ingressClassResource.name=nginx --set controller.ingressClassResource.enabled=true --set controller.extraArgs.default-ssl-certificate=default/$ssl_secret_name --set controller.kind=DaemonSet --set controller.service.enabled=true --set controller.service.loadBalancerIP=$nginx_ingress_lb_ip --set controller.service.externalTrafficPolicy=Local --set controller.service.type=LoadBalancer --namespace ingress-nginx --create-namespace --wait          
+            ;;
+        "Install ExternalSecrets")
             helm upgrade --install external-secrets opsbridge/external-secrets --namespace external-secrets --create-namespace --wait
             kubectl create secret generic vault-token --from-literal=token=$vault_token -n default
             git clone https://ops-bridge@github.com/ops-bridge/scripts.git
@@ -101,29 +103,40 @@ EOF
             git pull
             yq e -i '.spec.provider.vault.server = strenv(vault_url)' ./vault/clustersecretstore.yaml
             kubectl apply -f ./vault/clustersecretstore.yaml
-            ### CrossPlane Deployment - PASSED ###
+            ;;
+        "Install CrossPlane")
             helm repo add crossplane-stable https://charts.crossplane.io/stable
             helm repo update
             helm install crossplane --namespace crossplane-system --create-namespace crossplane-stable/crossplane --version 1.12.2
-            kubectl apply -f ./crossplane/providers.yaml
-            ### ArgoCD Deployment - PASSED ###
+            ;;
+        "Install ArgoCD")
             helm upgrade --install argocd opsbridge/argo-cd --set server.url=$argocd_url --set server.ingress.enabled=true --set global.storageClass=$storage_class --set server.ingress.hostname=$argocd_hostname --set server.ingress.extraTls[0].hosts[0]=$argocd_hostname --set server.ingress.extraTls[0].secretName=$ssl_secret_name --set server.ingressClassName=nginx --set config.secret.argocdServerAdminPassword=$argocd_admin_password --namespace argocd --create-namespace --wait
-            ### Database Deployment - PASSED ###
+            ;;
+        "Install Database")
             helm upgrade --install postgresql opsbridge/postgresql --set global.postgresql.auth.postgresPassword=$postgresql_password --set global.storageClass=$storage_class --set global.postgresql.auth.username=opsbridge --set global.postgresql.auth.password=$postgresql_password --set image.auth.enablePostgresUser=true --set image.auth.postgresPassword=$postgresql_password --set architecture=standalone --set primary.service.type=LoadBalancer --set primary.service.loadBalancerIP=$postgresql_lb_ip --set primary.service.externalTrafficPolicy=Local --set primary.persistence.enabled=true --set primary.persistence.size="10Gi" --set primary.initdb.user=postgres --set primary.initdb.password=$postgresql_password --namespace opsbridge --create-namespace --wait
-            ### Keycloak Deployment ###
+            ;;
+        "Install Keycloak")
             helm upgrade --install keycloak opsbridge/keycloak --set global.storageClass=$storage_class --set auth.adminUser=keycloak --set auth.adminPassword=$keycloak_password --set ingress.hostname=$keycloak_hostname --set ingress.extraTls[0].hosts[0]=$keycloak_hostname --set ingress.extraTls[0].secretName=$ssl_secret_name --set externalDatabase.host=postgresql --set externalDatabase.port=5432 --set externalDatabase.user=postgres --set externalDatabase.database=keycloak --set externalDatabase.password=$postgresql_password --namespace opsbridge --create-namespace --wait
-            ### GitLab Deployment ###
-            ### Consul Deployment - PASSED ###
+            ;;
+        "Install Consul")
             helm upgrade --install consul opsbridge/consul --set server.storageClass=$storage_class --set ui.ingress.hosts[0].host=$consul_hostname --set ui.ingress.tls[0].hosts[0]=$consul_hostname --set ui.ingress.tls[0].secretName=$ssl_secret_name --namespace opsbridge --create-namespace --wait
-            ### Vault Deployment - PASSED ####
+            ;;
+        "Install Vault")
             helm upgrade --install vault opsbridge/vault --set global.storageClass=$storage_class --set server.ingress.extraTls[0].hosts[0]=$vault_hostname --set server.ingress.extraTls[0].secretName=$ssl_secret_name --set server.ingress.hostname=$vault_hostname --namespace opsbridge --create-namespace --wait
+            ;;
+        "Install Prometheus")
+            helm upgrade --install prometheus opsbridge/prometheus --set server.baseURL=$prometheus_hostname --set server.ingress.hosts[0]=$prometheus_hostname --set server.ingress.tls[0].hosts[0]=$prometheus_hostname --set server.ingress.tls[0].secretName=$ssl_secret_name --set server.persistentVolume.enabled=true --set server.persistentVolume.size=12Gi --set server.persistentVolume.storageClass=$storage_class --set alertmanager.enabled=true --set alertmanager.persistence.size=3Gi  --set alertmanager.ingress.hosts[0].host=$alertmanager_hostname --set alertmanager.ingress.tls[0].secretName=$secret_name --set alertmanager.ingress.tls[0].hosts[0]=$alertmanager_hostname --namespace opsbridge --create-namespace --wait
+            ;;               
+        "Deploy OpsBridge")
+            ### GitLab Deployment ###
             ### Jenkins Deployment ###
-            ### Prometheus Deployment ###
-            helm upgrade --install prometheus opsbridge/prometheus --set server.baseURL=$prometheus_hostname --set server.ingress.hosts[0]=$prometheus_hostname --set server.ingress.tls[0].hosts[0]=$prometheus_hostname --set server.ingress.tls[0].secretName=$ssl_secret_name --set server.persistentVolume.enabled=true --set server.persistentVolume.size=12Gi --set server.persistentVolume.storageClass=$storage_class --set alertmanager.enabled=true --set alertmanager.persistence.size=3Gi  --set alertmanager.ingress.hosts[0]=$alertmanager_hostname --set alertmanager.ingress.tls[0].secretName=$secret_name --set alertmanager.ingress.tls[0].hosts[0]=$alertmanager_hostname --namespace opsbridge --create-namespace --wait
             ### Sonarqube Deployment ###
             ### OpsBridge Deployment ###
             #helm upgrade --install opsbridge opsbridge/opsbridge --set server.ingress.enabled=true --set server.ingress.hostname=$opsbridge_hostname --set server.ingress.tls[0].hosts[0]=$opsbridge_hostname --set server.ingress.tls[0].secretName=$ssl_secret_name --set server.ingressClassName=nginx --namespace opsbridge --create-namespace --wait
             ;;
+        "Install Providers")
+            kubectl apply -f ./crossplane/providers.yaml
+            ;;  
         "Uninstall OpsBridge")
             helm uninstall argocd -n argocd
             helm uninstall metallb -n metallb-system
