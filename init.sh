@@ -125,6 +125,7 @@ EOF
             helm uninstall argocd -n argocd
             helm uninstall metallb -n metallb-system
             helm uninstall external-secrets -n external-secrets
+            helm uninstall external-secrets -n external-secrets
             helm uninstall opsbridge -n opsbridge
             helm uninstall postgresql -n opsbridge
             helm uninstall keycloak -n opsbridge
