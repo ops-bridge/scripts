@@ -99,6 +99,10 @@ EOF
             git pull
             yq e -i '.spec.provider.vault.server = strenv(vault_url)' ./vault/clustersecretstore.yaml
             kubectl apply -f ./vault/clustersecretstore.yaml
+            ### CrossPlane Deployment - PASSED ###
+            helm repo add crossplane-stable https://charts.crossplane.io/stable
+            helm repo update
+            helm install crossplane --namespace crossplane-system --create-namespace crossplane-stable/crossplane --version 1.12.2
             ### ArgoCD Deployment - PASSED ###
             helm upgrade --install argocd opsbridge/argo-cd --set server.url=$argocd_url --set server.ingress.enabled=true --set global.storageClass=$storage_class --set server.ingress.hostname=$argocd_hostname --set server.ingress.extraTls[0].hosts[0]=$argocd_hostname --set server.ingress.extraTls[0].secretName=$ssl_secret_name --set server.ingressClassName=nginx --set config.secret.argocdServerAdminPassword=$argocd_admin_password --namespace argocd --create-namespace --wait
             ### Database Deployment - PASSED ###
@@ -106,9 +110,9 @@ EOF
             ### Keycloak Deployment ###
             helm upgrade --install keycloak opsbridge/keycloak --set global.storageClass=$storage_class --set auth.adminUser=keycloak --set auth.adminPassword=$keycloak_password --set ingress.hostname=$keycloak_hostname --set ingress.extraTls[0].hosts[0]=$keycloak_hostname --set ingress.extraTls[0].secretName=$ssl_secret_name --set externalDatabase.host=postgresql --set externalDatabase.port=5432 --set externalDatabase.user=postgres --set externalDatabase.database=keycloak --set externalDatabase.password=$postgresql_password --namespace opsbridge --create-namespace --wait
             ### GitLab Deployment ###
-            ### Consul Deployment ###
+            ### Consul Deployment - PASSED ###
             helm upgrade --install consul opsbridge/consul --set server.storageClass=$storage_class --set ui.ingress.hosts[0].host=$consul_hostname --set ui.ingress.tls[0].hosts[0]=$consul_hostname --set ui.ingress.tls[0].secretName=$ssl_secret_name --namespace opsbridge --create-namespace --wait
-            ### Vault Deployment ####
+            ### Vault Deployment - PASSED ####
             helm upgrade --install vault opsbridge/vault --set global.storageClass=$storage_class --set server.ingress.extraTls[0].hosts[0]=$vault_hostname --set server.ingress.extraTls[0].secretName=$ssl_secret_name --set server.ingress.hostname=$vault_hostname --namespace opsbridge --create-namespace --wait
             ### Jenkins Deployment ###
             ### Prometheus Deployment ###
