@@ -19,6 +19,12 @@ read -e -p "Vault.Hostname: " -i "vault.tenant.com" vault_hostname
 read -e -p "Consul.Hostname: " -i "consul.tenant.com" consul_hostname
 read -e -p "Prometheus.Hostname: " -i "prometheus.tenant.com" prometheus_hostname
 read -e -p "Alertmanager.Hostname: " -i "alertmanager.tenant.com" alertmanager_hostname
+read -e -p "Gitlab.Domain: " -i "tenant.com" gitlab_domain
+read -e -p "Gitlab.Hostname: " -i "gitlab.tenant.com" gitlab_hostname
+read -e -p "Gitlab.Password: " -i "StrongPassword!@" gitlab_password
+read -e -p "Jenkins.Password: " -i "StrongPassword!@" jenkins_password
+read -e -p "Jenkins.Hostname: " -i "jenkins.tenant.com" jenkins_hostname
+read -e -p "Sonarqube.Hostname: " -i "sonarqube.tenant.com" sonarqube_hostname
 
 curl -O https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
 bash ./get-helm-3 
@@ -28,7 +34,28 @@ helm repo update
 helm search repo opsbridge
 
 PS3='Welcome to OpsBridge Installation: '
-options=("Prepare Operating System" "Install Containerd Runtime" "Install Kubernetes" "Install MetalLB" "Install LoadBalancer" "Install ExternalSecrets" "Install CrossPlane" "Install ArgoCD" "Install Database" "Install Keycloak" "Install Consul" "Install Vault" "Install Prometheus" "Install Providers" "Deploy OpsBridge" "Uninstall OpsBridge" "Uninstall Kubernetes" "Quit")
+options=("Prepare Operating System" 
+         "Install Containerd Runtime" 
+         "Install Kubernetes" 
+         "Install MetalLB" 
+         "Install LoadBalancer" 
+         "Install ExternalSecrets" 
+         "Install CrossPlane" 
+         "Install ArgoCD" 
+         "Install Database" 
+         "Install Keycloak" 
+         "Install Consul" 
+         "Install Vault" 
+         "Install Prometheus" 
+         "Install GitLab" 
+         "Install Jenkins"
+         "Install Sonarqube"         
+         "Install Providers" 
+         "Deploy OpsBridge" 
+         "Uninstall OpsBridge" 
+         "Uninstall Kubernetes" 
+         "Quit")
+
 select opt in "${options[@]}"
 do
     case $opt in
@@ -126,13 +153,18 @@ EOF
             ;;
         "Install Prometheus")
             helm upgrade --install prometheus opsbridge/prometheus --set server.baseURL=$prometheus_hostname --set server.ingress.hosts[0]=$prometheus_hostname --set server.ingress.tls[0].hosts[0]=$prometheus_hostname --set server.ingress.tls[0].secretName=$ssl_secret_name --set server.persistentVolume.enabled=true --set server.persistentVolume.size=12Gi --set server.persistentVolume.storageClass=$storage_class --set alertmanager.enabled=true --set alertmanager.persistence.size=3Gi  --set alertmanager.ingress.hosts[0].host=$alertmanager_hostname --set alertmanager.ingress.hosts[0].paths[0].path=/ --set alertmanager.ingress.hosts[0].paths[0].pathType=ImplementationSpecific --set alertmanager.ingress.tls[0].secretName=$ssl_secret_name --set alertmanager.ingress.tls[0].hosts[0]=$alertmanager_hostname --namespace opsbridge --create-namespace --wait
-            ;;               
-        "Deploy OpsBridge")
-            ### GitLab Deployment ###
-            ### Jenkins Deployment ###
-            ### Sonarqube Deployment ###
-            ### OpsBridge Deployment ###
-            #helm upgrade --install opsbridge opsbridge/opsbridge --set server.ingress.enabled=true --set server.ingress.hostname=$opsbridge_hostname --set server.ingress.tls[0].hosts[0]=$opsbridge_hostname --set server.ingress.tls[0].secretName=$ssl_secret_name --set server.ingressClassName=nginx --namespace opsbridge --create-namespace --wait
+            ;;
+        "Install GitLab")
+            helm upgrade --install gitlab opsbridge/gitlab --set global.edition=ce --set global.hosts.domain=$gitlab_domain --set global.hosts.ssh.name=$gitlab_hostname --set global.hosts.gitlab.name=$gitlab_hostname --set global.hosts.minio.name=$gitlab_hostname --set global.hosts.registry.name=$gitlab_hostname --set global.hosts.kas.name=$gitlab_hostname --set global.ingress.provider=nginx --set global.ingress.class=nginx --set global.ingress.enabled=true --set global.ingress.tls.secretName=$ssl_secret_name --set global.initialRootPassword.key=$gitlab_password --set certmanager.install=false --set nginx-ingress.enabled=false --set postgresql.postgresqlPostgresPassword=$gitlab_password --namespace opsbridge --create-namespace --wait
+            ;;
+        "Install Jenkins")
+            helm upgrade --install jenkins opsbridge/jenkins --set controller.adminPassword=$jenkins_password --set controller.ingress.enabled=true --set controller.ingress.hostName=$jenkins_hostname --set controller.ingress.tls[0].secretName=$ssl_secret_name --set controller.ingress.tls[0].hosts[0]=$jenkins_hostname --set persistence.enabled=true --set persistence.storageClass=$storage_class --set persistence.size=16Gi --namespace opsbridge --create-namespace --wait
+            ;;            
+        "Install Sonarqube")
+            helm upgrade --install sonarqube opsbridge/sonarqube --set ingress.enabled=true --set ingress.hosts[0].name=$sonarqube_hostname --set ingress.ingressClassName=nginx --set ingress.tls[0].hosts[0]=$sonarqube_hostname --set ingress.tls[0].secretName=$ssl_secret_name --set persistence.enabled=true --set persistence.storageClass=$storage_class --set persistence.size=10Gi --namespace opsbridge --create-namespace --wait
+            ;;            
+        "Install OpsBridge")
+            helm upgrade --install opsbridge opsbridge/opsbridge --set server.ingress.enabled=true --set server.ingress.hostname=$opsbridge_hostname --set server.ingress.tls[0].hosts[0]=$opsbridge_hostname --set server.ingress.tls[0].secretName=$ssl_secret_name --set server.ingressClassName=nginx --namespace opsbridge --create-namespace --wait
             ;;
         "Install Providers")
             cd scripts
@@ -149,6 +181,9 @@ EOF
             helm uninstall consul -n opsbridge
             helm uninstall vault -n opsbridge
             helm uninstall prometheus -n opsbridge
+            helm uninstall gitlab -n opsbridge
+            helm uninstall jenkins -n opsbridge
+            helm uninstall sonarqube -n opsbridge
             ;;
         "Uninstall Kubernetes")
             echo yes | ./kk delete cluster
