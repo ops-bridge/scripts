@@ -1,0 +1,48 @@
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: upbound-provider-gcp
+spec:
+  package: xpkg.upbound.io/upbound/provider-gcp:v0.33.1
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: upbound-provider-azure
+spec:
+  package: xpkg.upbound.io/upbound/provider-azure:v0.32.0
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: upbound-provider-aws
+spec:
+  package: xpkg.upbound.io/upbound/provider-aws:v0.36.0
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: upbound-provider-kubernetes
+spec:
+  package: xpkg.upbound.io/upbound/provider-kubernetes:v0.9.0
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: upbound-provider-ansible
+spec:
+  package: xpkg.upbound.io/upbound/provider-ansible:v0.5.0
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: upbound-provider-terraform
+spec:
+  package: xpkg.upbound.io/upbound/provider-terraform:v0.8.0
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: upbound-provider-helm
+spec:
+  package: xpkg.upbound.io/upbound/provider-helm:v0.15.0
