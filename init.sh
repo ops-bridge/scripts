@@ -21,7 +21,6 @@ read -e -p "Prometheus.Hostname: " -i "prometheus.tenant.com" prometheus_hostnam
 read -e -p "Alertmanager.Hostname: " -i "alertmanager.tenant.com" alertmanager_hostname
 read -e -p "Gitlab.Domain: " -i "tenant.com" gitlab_domain
 read -e -p "Gitlab.Hostname: " -i "gitlab.tenant.com" gitlab_hostname
-read -e -p "Gitlab.Password: " -i "StrongPassword!@" gitlab_password
 read -e -p "Jenkins.Password: " -i "StrongPassword!@" jenkins_password
 read -e -p "Jenkins.Hostname: " -i "jenkins.tenant.com" jenkins_hostname
 read -e -p "Sonarqube.Hostname: " -i "sonarqube.tenant.com" sonarqube_hostname
@@ -53,6 +52,7 @@ options=("Prepare Operating System"
          "Install Sonarqube" 
          "Install OpsBridge" 
          "Install Providers" 
+         "Show Gitlab Password"          
          "Uninstall OpsBridge" 
          "Uninstall Kubernetes" 
          "Quit")
@@ -170,6 +170,9 @@ EOF
         "Install Providers")
             cd scripts
             kubectl apply -f ./crossplane/providers.yaml
+            ;;  
+        "Show Gitlab Password" ")
+            kubectl get secret gitlab-gitlab-initial-root-password -ojsonpath='{.data.password}' -n opsbridge | base64 --decode ; echo
             ;;  
         "Uninstall OpsBridge")
             helm uninstall argocd -n argocd
