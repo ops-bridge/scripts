@@ -25,6 +25,7 @@ read -e -p "Gitlab.Password: " -i "StrongPassword!@" gitlab_password
 read -e -p "Jenkins.Password: " -i "StrongPassword!@" jenkins_password
 read -e -p "Jenkins.Hostname: " -i "jenkins.tenant.com" jenkins_hostname
 read -e -p "Sonarqube.Hostname: " -i "sonarqube.tenant.com" sonarqube_hostname
+read -e -p "Sonarqube.Password: " -i "StrongPassword!@" sonarqube_password
 
 curl -O https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
 bash ./get-helm-3 
@@ -161,7 +162,7 @@ EOF
             helm upgrade --install jenkins opsbridge/jenkins --set controller.adminPassword=$jenkins_password --set controller.ingress.enabled=true --set controller.ingress.hostName=$jenkins_hostname --set controller.ingress.tls[0].secretName=$ssl_secret_name --set controller.ingress.tls[0].hosts[0]=$jenkins_hostname --set persistence.enabled=true --set persistence.storageClass=$storage_class --set persistence.size=16Gi --namespace opsbridge --create-namespace --wait
             ;;            
         "Install Sonarqube")
-            helm upgrade --install sonarqube opsbridge/sonarqube --set ingress.enabled=true --set ingress.hosts[0].name=$sonarqube_hostname --set ingress.ingressClassName=nginx --set ingress.tls[0].hosts[0]=$sonarqube_hostname --set ingress.tls[0].secretName=$ssl_secret_name --set persistence.enabled=true --set persistence.storageClass=$storage_class --set persistence.size=10Gi --set jdbcOverwrite.jdbcUrl=jdbc:postgresql://postgresql-hl/sonarqube?socketTimeout=1500 --set jdbcOverwrite.jdbcPassword=$postgresql_password --namespace opsbridge --create-namespace --wait
+            helm upgrade --install sonarqube opsbridge/sonarqube --set account.adminPassword=$sonarqube_password --set ingress.enabled=true --set ingress.hosts[0].name=$sonarqube_hostname --set ingress.ingressClassName=nginx --set ingress.tls[0].hosts[0]=$sonarqube_hostname --set ingress.tls[0].secretName=$ssl_secret_name --set persistence.enabled=true --set persistence.storageClass=$storage_class --set postgresql.persistence.storageClass=$storage_class --set persistence.size=10Gi --set jdbcOverwrite.jdbcUrl=jdbc:postgresql://postgresql-hl/sonarqube?socketTimeout=1500 --set jdbcOverwrite.jdbcPassword=$postgresql_password --namespace opsbridge --create-namespace --wait
             ;;            
         "Install OpsBridge")
             helm upgrade --install opsbridge opsbridge/opsbridge --set server.ingress.enabled=true --set server.ingress.hostname=$opsbridge_hostname --set server.ingress.tls[0].hosts[0]=$opsbridge_hostname --set server.ingress.tls[0].secretName=$ssl_secret_name --set server.ingressClassName=nginx --namespace opsbridge --create-namespace --wait
@@ -172,7 +173,6 @@ EOF
             ;;  
         "Uninstall OpsBridge")
             helm uninstall argocd -n argocd
-            helm uninstall metallb -n metallb-system
             helm uninstall external-secrets -n external-secrets
             helm uninstall crossplane -n crossplane-system
             helm uninstall opsbridge -n opsbridge
