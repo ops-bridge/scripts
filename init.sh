@@ -2,6 +2,7 @@
 echo "Please fill the required areas for AIO OpdBridge Installation"
 read -e -p "SSLSecreName: " -i "ssl-cert" ssl_secret_name
 read -e -p "StorageClass : " -i "local" storage_class
+read -e -p "RegistrySecret : " -i "registry_secret" registry_Secret
 read -e -p "MetalLB.Ingress.IP : " -i "\"10.120.60.41/32"\" metallb_ingress_ip
 read -e -p "MetalLB.PostgreSQL.IP : " -i "\"10.120.60.42/32"\" metallb_postgres_ip            
 read -e -p "ArgoCD.URL: " -i "https://cd.tenant.com" argocd_url
@@ -21,6 +22,7 @@ read -e -p "Prometheus.Hostname: " -i "prometheus.tenant.com" prometheus_hostnam
 read -e -p "Alertmanager.Hostname: " -i "alertmanager.tenant.com" alertmanager_hostname
 read -e -p "Gitlab.Domain: " -i "tenant.com" gitlab_domain
 read -e -p "Gitlab.Hostname: " -i "gitlab.tenant.com" gitlab_hostname
+read -e -p "Gitlab.Url: " -i "https://gitlab.tenant.com" gitlab_url
 read -e -p "Jenkins.Password: " -i "StrongPassword!@" jenkins_password
 read -e -p "Jenkins.Hostname: " -i "jenkins.tenant.com" jenkins_hostname
 read -e -p "Sonarqube.Hostname: " -i "sonarqube.tenant.com" sonarqube_hostname
@@ -160,7 +162,7 @@ EOF
             helm upgrade --install prometheus opsbridge/prometheus --set server.baseURL=$prometheus_hostname --set server.ingress.hosts[0]=$prometheus_hostname --set server.ingress.tls[0].hosts[0]=$prometheus_hostname --set server.ingress.tls[0].secretName=$ssl_secret_name --set server.persistentVolume.enabled=true --set server.persistentVolume.size=12Gi --set server.persistentVolume.storageClass=$storage_class --set alertmanager.enabled=true --set alertmanager.persistence.size=3Gi  --set alertmanager.ingress.hosts[0].host=$alertmanager_hostname --set alertmanager.ingress.hosts[0].paths[0].path=/ --set alertmanager.ingress.hosts[0].paths[0].pathType=ImplementationSpecific --set alertmanager.ingress.tls[0].secretName=$ssl_secret_name --set alertmanager.ingress.tls[0].hosts[0]=$alertmanager_hostname --namespace opsbridge --create-namespace --wait
             ;;
         "Install GitLab")
-            helm upgrade --install gitlab opsbridge/gitlab --set global.edition=ce --set global.hosts.domain=$gitlab_domain --set global.hosts.ssh.name=$gitlab_hostname --set global.hosts.gitlab.name=$gitlab_hostname --set global.hosts.minio.name=$gitlab_hostname --set global.hosts.registry.name=$gitlab_hostname --set global.hosts.kas.name=$gitlab_hostname --set global.ingress.provider=nginx --set global.ingress.class=nginx --set global.ingress.enabled=true --set global.ingress.tls.secretName=$ssl_secret_name --set certmanager.install=false --set nginx-ingress.enabled=false --namespace opsbridge --create-namespace --wait
+            helm upgrade --install gitlab opsbridge/gitlab --set global.edition=ce --set global.hosts.domain=$gitlab_domain --set global.hosts.ssh.name=$gitlab_hostname --set global.hosts.gitlab.name=$gitlab_hostname --set global.hosts.minio.name=$gitlab_hostname --set global.hosts.registry.name=$gitlab_hostname --set global.hosts.kas.name=$gitlab_hostname --set global.ingress.provider=nginx --set global.ingress.class=nginx --set global.ingress.enabled=true --set global.ingress.tls.secretName=$ssl_secret_name --set certmanager.install=false --set nginx-ingress.enabled=false --set global.runner.gitlabUrl=$gitlab_url --set global.runner.imagePullSecrets[0].name[0]=$registry_secret --namespace opsbridge --create-namespace --wait
             ;;
         "Install Jenkins")
             helm upgrade --install jenkins opsbridge/jenkins --set controller.adminPassword=$jenkins_password --set controller.ingress.enabled=true --set controller.ingress.hostName=$jenkins_hostname --set controller.ingress.tls[0].secretName=$ssl_secret_name --set controller.ingress.tls[0].hosts[0]=$jenkins_hostname --set persistence.enabled=true --set persistence.storageClass=$storage_class --set persistence.size=16Gi --namespace opsbridge --create-namespace --wait
