@@ -56,7 +56,7 @@ options=("Prepare Operating System"
          "Install Database" 
          "Install Keycloak" 
          "Install Consul" 
-         "Install Vault" 
+         "Install Vault"         
          "Install Prometheus" 
          "Install GitLab" 
          "Install Jenkins" 
@@ -65,6 +65,7 @@ options=("Prepare Operating System"
          "Install CrossPlane Providers" 
          "Install ExternalSecrets"          
          "Show Gitlab Password" 
+         "Show Vault Password" 
          "Add Registry Server" 
          "Uninstall OpsBridge" 
          "Uninstall Kubernetes" 
@@ -159,7 +160,8 @@ EOF
             helm upgrade --install consul opsbridge/consul --set server.storageClass=$storage_class --set ui.ingress.hosts[0].host=$consul_hostname --set ui.ingress.tls[0].hosts[0]=$consul_hostname --set ui.ingress.tls[0].secretName=$ssl_secret_name --namespace opsbridge --create-namespace --wait
             ;;
         "Install Vault")
-            helm upgrade --install vault opsbridge/vault --set global.storageClass=$storage_class --set server.ingress.extraTls[0].hosts[0]=$vault_hostname --set server.ingress.extraTls[0].secretName=$ssl_secret_name --set server.ingress.hostname=$vault_hostname --namespace opsbridge --create-namespace --wait
+            helm upgrade --install vault opsbridge/vault --set global.storageClass=$storage_class --set server.ingress.extraTls[0].hosts[0]=$vault_hostname --set server.ingress.extraTls[0].secretName=$ssl_secret_name --set server.ingress.hostname=$vault_hostname --namespace opsbridge --create-namespace
+            sleep 30
             kubectl exec vault-server-0 -n opsbridge -- vault operator init -key-shares=1 -key-threshold=1 -format=json > vault-central-keys.json
             cat vault-central-keys.json | jq -r ".unseal_keys_b64[]"
             VAULT_UNSEAL_KEY=$(cat vault-central-keys.json | jq -r ".unseal_keys_b64[]")
@@ -196,6 +198,9 @@ EOF
             ;;            
         "Show Gitlab Password")
             kubectl get secret gitlab-gitlab-initial-root-password -ojsonpath='{.data.password}' -n opsbridge | base64 --decode ; echo
+            ;;  
+        "Show Vault Password")
+            cat vault-central-keys.json | jq -r ".root_token"
             ;;  
         "Add Registry Server")
             kubectl --namespace default create secret docker-registry registry-secret --docker-server='$registry_url' --docker-username='$registry_username' --docker-password='$registry_password' --docker-email='$registry_email'
