@@ -52,6 +52,7 @@ options=("Prepare Operating System"
          "Install CrossPlane" 
          "Install ArgoCD" 
          "Install ArgoWorkflows" 
+         "Apply WFT"         
          "Install ChartMuseum" 
          "Install Database" 
          "Install Keycloak" 
@@ -147,6 +148,13 @@ EOF
         "Install ArgoWorkflows")
             helm upgrade --install argo-workflows opsbridge/argo-workflows --set global.storageClass=$storage_class --set ingress.enabled=true --set ingress.hostname=$argoflow_hostname --set ingress.ingressClassName=nginx --set ingress.extraTls[0].hosts[0]=$argoflow_hostname --set ingress.extraTls[0].secretName=$ssl_secret_name --namespace argocd --create-namespace --wait
             ;;
+        "Apply WFT")
+            git clone https://ops-bridge@github.com/ops-bridge/scripts.git
+            cd scripts
+            git fetch --all
+            git pull
+            kubectl apply -f ./wft/
+            ;;            
         "Install ChartMuseum")
             helm upgrade --install chartmuseum opsbridge/chartmuseum --set persistence.enabled=true --set persistence.size=20Gi --set persistence.storageClass=$storage_class --set ingress.enabled=true --set ingress.hosts[0].name=$helm_hostname --set ingress.hosts[0].tlsSecret=$ssl_secret_name --set env.secret.BASIC_AUTH_USER=$helm_username --set env.secret.BASIC_AUTH_PASS=$helm_password --namespace opsbridge --create-namespace --wait
             ;;
