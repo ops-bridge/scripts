@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ClusterWorkflowTemplate
 metadata:
-  name: cwft-helm
+  name: wft-helm
   annotations:
     argocd.argoproj.io/sync-wave: '0'
 spec:
