@@ -42,6 +42,7 @@ options=("Prepare Operating System"
          "Install ExternalSecrets" 
          "Install CrossPlane" 
          "Install ArgoCD" 
+         "Install ArgoWorkflows" 
          "Install Database" 
          "Install Keycloak" 
          "Install Consul" 
@@ -139,6 +140,9 @@ EOF
             ;;
         "Install ArgoCD")
             helm upgrade --install argocd opsbridge/argo-cd --set server.url=$argocd_url --set server.ingress.enabled=true --set global.storageClass=$storage_class --set server.ingress.hostname=$argocd_hostname --set server.ingress.extraTls[0].hosts[0]=$argocd_hostname --set server.ingress.extraTls[0].secretName=$ssl_secret_name --set server.ingressClassName=nginx --set config.secret.argocdServerAdminPassword=$argocd_admin_password --namespace argocd --create-namespace --wait
+            ;;
+        "Install ArgoWorkflows")
+            helm upgrade --install argo-workflows opsbridge/argo-workflows --set global.storageClass=$storage_class --set ingress.enabled=true --set ingress.hostname=$argoflow_hostname --set -set ingress.ingressClassName=nginx --set --set ingress.extraTls[0].hosts[0]=$argoflow_hostname --set --set ingress.extraTls[0].secretName=$ssl_secret_name --namespace argocd --create-namespace --wait
             ;;
         "Install Database")
             helm upgrade --install postgresql opsbridge/postgresql --set global.postgresql.auth.postgresPassword=$postgresql_password --set global.storageClass=$storage_class --set global.postgresql.auth.username=opsbridge --set global.postgresql.auth.password=$postgresql_password --set image.auth.enablePostgresUser=true --set image.auth.postgresPassword=$postgresql_password --set architecture=standalone --set primary.service.type=LoadBalancer --set primary.service.loadBalancerIP=$postgresql_lb_ip --set primary.service.externalTrafficPolicy=Local --set primary.persistence.enabled=true --set primary.persistence.size="10Gi" --set primary.initdb.user=postgres --set primary.initdb.password=$postgresql_password --namespace opsbridge --create-namespace --wait
