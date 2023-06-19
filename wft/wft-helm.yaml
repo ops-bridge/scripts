@@ -65,7 +65,7 @@ spec:
       command: ['bash', '-c']
       workingDir: '/src/{{inputs.parameters.appName}}'
       args:
-        - helm repo add kubefirst http://chartmuseum.svc.cluster.local:8080 --username ${BASIC_AUTH_USER} --password ${BASIC_AUTH_PASS} || bash -c "sleep 10 && echo 'waiting before trying again' && exit 1";
+        - helm repo add kubefirst http://chartmuseum.svc.cluster.local:8080 --username admin --password StrongPassword!@ || bash -c "sleep 10 && echo 'waiting before trying again' && exit 1";
           helm push {{inputs.parameters.chartDir}} opsbridge || bash -c "sleep 10 && echo 'waiting before trying again' && exit 1";
       env:
       - name: BASIC_AUTH_PASS
