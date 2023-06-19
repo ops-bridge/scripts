@@ -32,6 +32,9 @@ read -e -p "Jenkins.Password: " -i "StrongPassword!@" jenkins_password
 read -e -p "Jenkins.Hostname: " -i "jenkins.tenant.com" jenkins_hostname
 read -e -p "Sonarqube.Hostname: " -i "sonarqube.tenant.com" sonarqube_hostname
 read -e -p "Sonarqube.Password: " -i "StrongPassword!@" sonarqube_password
+read -e -p "Helm.Hostname: " -i "helm.tenant.com" helm_hostname
+read -e -p "Helm.Username: " -i "admin" helm_username
+read -e -p "Helm.Password: " -i "StrongPassword!@" helm_password
 
 curl -O https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
 bash ./get-helm-3 
@@ -46,10 +49,10 @@ options=("Prepare Operating System"
          "Install Kubernetes" 
          "Install MetalLB" 
          "Install LoadBalancer" 
-         "Install ExternalSecrets" 
          "Install CrossPlane" 
          "Install ArgoCD" 
          "Install ArgoWorkflows" 
+         "Install ChartMuseum" 
          "Install Database" 
          "Install Keycloak" 
          "Install Consul" 
@@ -59,7 +62,8 @@ options=("Prepare Operating System"
          "Install Jenkins" 
          "Install Sonarqube" 
          "Install OpsBridge" 
-         "Install Providers" 
+         "Install CrossPlane Providers" 
+         "Install ExternalSecrets"          
          "Show Gitlab Password" 
          "Add Registry Server" 
          "Uninstall OpsBridge" 
@@ -72,7 +76,7 @@ do
         "Prepare Operating System")
             sudo apt update
             sudo apt upgrade -y
-            sudo apt install vim wget git net-tools telnet curl nload socat conntrack -y
+            sudo apt install vim wget git net-tools telnet curl nload socat conntrack jq -y
             sudo timedatectl set-timezone Europe/Istanbul
             sudo hostnamectl set-hostname opsbridge01
             sudo lvextend -l +100%FREE /dev/ubuntu-vg/ubuntu-lv
@@ -131,16 +135,6 @@ EOF
         "Install LoadBalancer")
             helm upgrade --install ingress-nginx opsbridge/ingress-nginx --set controller.hostNetwork=true --set controller.hostPort.enabled=true --set controller.ingressClassResource.name=nginx --set controller.ingressClassResource.enabled=true --set controller.extraArgs.default-ssl-certificate=default/$ssl_secret_name --set controller.kind=DaemonSet --set controller.service.enabled=true --set controller.service.loadBalancerIP=$nginx_ingress_lb_ip --set controller.service.externalTrafficPolicy=Local --set controller.service.type=LoadBalancer --namespace ingress-nginx --create-namespace --wait          
             ;;
-        "Install ExternalSecrets")
-            helm upgrade --install external-secrets opsbridge/external-secrets --namespace external-secrets --create-namespace --wait
-            kubectl create secret generic vault-token --from-literal=token=$vault_token -n default
-            git clone https://ops-bridge@github.com/ops-bridge/scripts.git
-            cd scripts
-            git fetch --all
-            git pull
-            yq e -i '.spec.provider.vault.server = strenv(vault_url)' ./vault/clustersecretstore.yaml
-            kubectl apply -f ./vault/clustersecretstore.yaml
-            ;;
         "Install CrossPlane")
             helm repo add crossplane-stable https://charts.crossplane.io/stable
             helm repo update
@@ -151,6 +145,9 @@ EOF
             ;;
         "Install ArgoWorkflows")
             helm upgrade --install argo-workflows opsbridge/argo-workflows --set global.storageClass=$storage_class --set ingress.enabled=true --set ingress.hostname=$argoflow_hostname --set ingress.ingressClassName=nginx --set ingress.extraTls[0].hosts[0]=$argoflow_hostname --set ingress.extraTls[0].secretName=$ssl_secret_name --namespace argocd --create-namespace --wait
+            ;;
+        "Install ChartMuseum")
+            helm upgrade --install chartmuseum opsbridge/chartmuseum --set persistence.enabled=true --set persistence.size=20Gi --set persistence.storageClass=$storage_class --set ingress.enabled=true --set ingress.hosts[0].name=$helm_hostname --set ingress.hosts[0].tlsSecret=$ssl_secret_name --set env.secret.BASIC_AUTH_USER=$helm_username --set env.secret.BASIC_AUTH_PASS=$helm_password --namespace opsbridge --create-namespace --wait
             ;;
         "Install Database")
             helm upgrade --install postgresql opsbridge/postgresql --set global.postgresql.auth.postgresPassword=$postgresql_password --set global.storageClass=$storage_class --set global.postgresql.auth.username=opsbridge --set global.postgresql.auth.password=$postgresql_password --set image.auth.enablePostgresUser=true --set image.auth.postgresPassword=$postgresql_password --set architecture=standalone --set primary.service.type=LoadBalancer --set primary.service.loadBalancerIP=$postgresql_lb_ip --set primary.service.externalTrafficPolicy=Local --set primary.persistence.enabled=true --set primary.persistence.size="10Gi" --set primary.initdb.user=postgres --set primary.initdb.password=$postgresql_password --namespace opsbridge --create-namespace --wait
@@ -163,6 +160,10 @@ EOF
             ;;
         "Install Vault")
             helm upgrade --install vault opsbridge/vault --set global.storageClass=$storage_class --set server.ingress.extraTls[0].hosts[0]=$vault_hostname --set server.ingress.extraTls[0].secretName=$ssl_secret_name --set server.ingress.hostname=$vault_hostname --namespace opsbridge --create-namespace --wait
+            kubectl exec vault-server-0 -n opsbridge -- vault operator init -key-shares=1 -key-threshold=1 -format=json > vault-central-keys.json
+            cat vault-central-keys.json | jq -r ".unseal_keys_b64[]"
+            VAULT_UNSEAL_KEY=$(cat vault-central-keys.json | jq -r ".unseal_keys_b64[]")
+            kubectl exec vault-server-0 -n opsbridge -- vault operator unseal $VAULT_UNSEAL_KEY
             ;;
         "Install Prometheus")
             helm upgrade --install prometheus opsbridge/prometheus --set server.baseURL=$prometheus_hostname --set server.ingress.hosts[0]=$prometheus_hostname --set server.ingress.tls[0].hosts[0]=$prometheus_hostname --set server.ingress.tls[0].secretName=$ssl_secret_name --set server.persistentVolume.enabled=true --set server.persistentVolume.size=12Gi --set server.persistentVolume.storageClass=$storage_class --set alertmanager.enabled=true --set alertmanager.persistence.size=3Gi  --set alertmanager.ingress.hosts[0].host=$alertmanager_hostname --set alertmanager.ingress.hosts[0].paths[0].path=/ --set alertmanager.ingress.hosts[0].paths[0].pathType=ImplementationSpecific --set alertmanager.ingress.tls[0].secretName=$ssl_secret_name --set alertmanager.ingress.tls[0].hosts[0]=$alertmanager_hostname --namespace opsbridge --create-namespace --wait
@@ -179,10 +180,20 @@ EOF
         "Install OpsBridge")
             helm upgrade --install opsbridge opsbridge/opsbridge --set server.ingress.enabled=true --set server.ingress.hostname=$opsbridge_hostname --set server.ingress.tls[0].hosts[0]=$opsbridge_hostname --set server.ingress.tls[0].secretName=$ssl_secret_name --set server.ingressClassName=nginx --namespace opsbridge --create-namespace --wait
             ;;
-        "Install Providers")
+        "Install CrossPlane Providers")
             cd scripts
             kubectl apply -f ./crossplane/providers.yaml
-            ;;  
+            ;;
+        "Install ExternalSecrets")
+            helm upgrade --install external-secrets opsbridge/external-secrets --namespace external-secrets --create-namespace --wait
+            kubectl create secret generic vault-token --from-literal=token=$vault_token -n default
+            git clone https://ops-bridge@github.com/ops-bridge/scripts.git
+            cd scripts
+            git fetch --all
+            git pull
+            yq e -i '.spec.provider.vault.server = strenv(vault_url)' ./vault/clustersecretstore.yaml
+            kubectl apply -f ./vault/clustersecretstore.yaml
+            ;;            
         "Show Gitlab Password")
             kubectl get secret gitlab-gitlab-initial-root-password -ojsonpath='{.data.password}' -n opsbridge | base64 --decode ; echo
             ;;  
@@ -205,6 +216,7 @@ EOF
             helm uninstall gitlab -n opsbridge
             helm uninstall jenkins -n opsbridge
             helm uninstall sonarqube -n opsbridge
+            helm uninstall chartmuseum -n opsbridge
             ;;
         "Uninstall Kubernetes")
             echo yes | ./kk delete cluster
