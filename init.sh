@@ -8,6 +8,7 @@ read -e -p "MetalLB.PostgreSQL.IP : " -i "\"10.120.60.42/32"\" metallb_postgres_
 read -e -p "ArgoCD.URL: " -i "https://cd.tenant.com" argocd_url
 read -e -p "ArgoCD.Hostname: " -i "cd.tenant.com" argocd_hostname
 read -e -p "ArgoCD.AdminPassword: " -i "StrongPassword!@" argocd_admin_password
+read -e -p "ArgoWorkflows.Hostname: " -i "ci.tenant.com" argoflow_hostname
 read -e -p "OpsBridge.Hostname: " -i "opsbridge.tenant.com" opsbridge_hostname
 read -e -p "NginxIngress.LoadBalancerIP: " -i "10.120.60.41" nginx_ingress_lb_ip
 read -e -p "PostgreSQL.Password: " -i "StrongPassword!@" postgresql_password
@@ -144,7 +145,7 @@ EOF
             helm upgrade --install argocd opsbridge/argo-cd --set server.url=$argocd_url --set server.ingress.enabled=true --set global.storageClass=$storage_class --set server.ingress.hostname=$argocd_hostname --set server.ingress.extraTls[0].hosts[0]=$argocd_hostname --set server.ingress.extraTls[0].secretName=$ssl_secret_name --set server.ingressClassName=nginx --set config.secret.argocdServerAdminPassword=$argocd_admin_password --namespace argocd --create-namespace --wait
             ;;
         "Install ArgoWorkflows")
-            helm upgrade --install argo-workflows opsbridge/argo-workflows --set global.storageClass=$storage_class --set ingress.enabled=true --set ingress.hostname=$argoflow_hostname --set -set ingress.ingressClassName=nginx --set --set ingress.extraTls[0].hosts[0]=$argoflow_hostname --set --set ingress.extraTls[0].secretName=$ssl_secret_name --namespace argocd --create-namespace --wait
+            helm upgrade --install argo-workflows opsbridge/argo-workflows --set global.storageClass=$storage_class --set ingress.enabled=true --set ingress.hostname=$argoflow_hostname --set ingress.ingressClassName=nginx --set ingress.extraTls[0].hosts[0]=$argoflow_hostname --set ingress.extraTls[0].secretName=$ssl_secret_name --namespace argocd --create-namespace --wait
             ;;
         "Install Database")
             helm upgrade --install postgresql opsbridge/postgresql --set global.postgresql.auth.postgresPassword=$postgresql_password --set global.storageClass=$storage_class --set global.postgresql.auth.username=opsbridge --set global.postgresql.auth.password=$postgresql_password --set image.auth.enablePostgresUser=true --set image.auth.postgresPassword=$postgresql_password --set architecture=standalone --set primary.service.type=LoadBalancer --set primary.service.loadBalancerIP=$postgresql_lb_ip --set primary.service.externalTrafficPolicy=Local --set primary.persistence.enabled=true --set primary.persistence.size="10Gi" --set primary.initdb.user=postgres --set primary.initdb.password=$postgresql_password --namespace opsbridge --create-namespace --wait
@@ -177,11 +178,12 @@ EOF
             cd scripts
             kubectl apply -f ./crossplane/providers.yaml
             ;;  
-        "Show Gitlab Password" ")
+        "Show Gitlab Password")
             kubectl get secret gitlab-gitlab-initial-root-password -ojsonpath='{.data.password}' -n opsbridge | base64 --decode ; echo
             ;;  
         "Uninstall OpsBridge")
             helm uninstall argocd -n argocd
+            helm uninstall argo-workflows -n argocd
             helm uninstall external-secrets -n external-secrets
             helm uninstall crossplane -n crossplane-system
             helm uninstall opsbridge -n opsbridge
