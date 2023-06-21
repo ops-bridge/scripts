@@ -52,6 +52,7 @@ options=("Prepare Operating System"
          "Install CrossPlane" 
          "Install ArgoCD" 
          "Install ArgoWorkflows" 
+         "Install TektonPipelines" 
          "Apply WFT"         
          "Install ChartMuseum" 
          "Install Database" 
@@ -147,6 +148,14 @@ EOF
             ;;
         "Install ArgoWorkflows")
             helm upgrade --install argo-workflows opsbridge/argo-workflows --set global.storageClass=$storage_class --set ingress.enabled=true --set ingress.hostname=$argoflow_hostname --set ingress.ingressClassName=nginx --set ingress.extraTls[0].hosts[0]=$argoflow_hostname --set ingress.extraTls[0].secretName=$ssl_secret_name --namespace argocd --create-namespace --wait
+            ;;
+        "Install TektonPipelines")
+            git clone https://ops-bridge@github.com/ops-bridge/scripts.git
+            cd scripts
+            git fetch --all
+            git pull
+            kubectl apply -f ./tekton/pipelines.yaml
+            kubectl apply -f ./tekton/dashboard.yaml
             ;;
         "Apply WFT")
             git clone https://ops-bridge@github.com/ops-bridge/scripts.git
