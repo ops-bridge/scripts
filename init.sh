@@ -50,10 +50,6 @@ options=("Prepare Operating System"
          "Install MetalLB" 
          "Install LoadBalancer" 
          "Install CrossPlane" 
-         "Install ArgoCD" 
-         "Install ArgoWorkflows" 
-         "Install TektonPipelines" 
-         "Apply WFT"         
          "Install ChartMuseum" 
          "Install Database" 
          "Install Keycloak" 
@@ -143,30 +139,6 @@ EOF
             helm repo update
             helm upgrade --install crossplane --namespace crossplane-system --create-namespace crossplane-stable/crossplane --version 1.12.2
             ;;
-        "Install ArgoCD")
-            helm upgrade --install argocd opsbridge/argo-cd --set server.url=$argocd_url --set server.ingress.enabled=true --set global.storageClass=$storage_class --set server.ingress.hostname=$argocd_hostname --set server.ingress.extraTls[0].hosts[0]=$argocd_hostname --set server.ingress.extraTls[0].secretName=$ssl_secret_name --set server.ingressClassName=nginx --set config.secret.argocdServerAdminPassword=$argocd_admin_password --namespace argocd --create-namespace --wait
-            ;;
-        "Install ArgoWorkflows")
-            helm upgrade --install argo-workflows opsbridge/argo-workflows --set global.storageClass=$storage_class --set ingress.enabled=true --set ingress.hostname=$argoflow_hostname --set ingress.ingressClassName=nginx --set ingress.extraTls[0].hosts[0]=$argoflow_hostname --set ingress.extraTls[0].secretName=$ssl_secret_name --namespace argocd --create-namespace --wait
-            ;;
-        "Install TektonPipelines")
-            git clone https://ops-bridge@github.com/ops-bridge/scripts.git
-            cd scripts
-            git fetch --all
-            git pull
-            kubectl apply -f ./tekton/pipelines.yaml
-            kubectl apply -f ./tekton/dashboard.yaml
-            ;;
-        "Apply WFT")
-            git clone https://ops-bridge@github.com/ops-bridge/scripts.git
-            cd scripts
-            git fetch --all
-            git pull
-            kubectl apply -f ./wft/
-            ;;            
-        "Install ChartMuseum")
-            helm upgrade --install chartmuseum opsbridge/chartmuseum --set persistence.enabled=true --set persistence.size=20Gi --set persistence.storageClass=$storage_class --set ingress.enabled=true --set ingress.hosts[0].name=$helm_hostname --set ingress.hosts[0].tlsSecret=$ssl_secret_name --set env.secret.BASIC_AUTH_USER=$helm_username --set env.secret.BASIC_AUTH_PASS=$helm_password --namespace opsbridge --create-namespace --wait
-            ;;
         "Install Database")
             helm upgrade --install postgresql opsbridge/postgresql --set global.postgresql.auth.postgresPassword=$postgresql_password --set global.storageClass=$storage_class --set global.postgresql.auth.username=opsbridge --set global.postgresql.auth.password=$postgresql_password --set image.auth.enablePostgresUser=true --set image.auth.postgresPassword=$postgresql_password --set architecture=standalone --set primary.service.type=LoadBalancer --set primary.service.loadBalancerIP=$postgresql_lb_ip --set primary.service.externalTrafficPolicy=Local --set primary.persistence.enabled=true --set primary.persistence.size="10Gi" --set primary.initdb.user=postgres --set primary.initdb.password=$postgresql_password --namespace opsbridge --create-namespace --wait
             ;;
@@ -225,8 +197,6 @@ EOF
             kubectl --namespace argocd create secret docker-registry registry-secret --docker-server='$registry_url' --docker-username='$registry_username' --docker-password='$registry_password' --docker-email='$registry_email'            
             ;;  
         "Uninstall OpsBridge")
-            helm uninstall argocd -n argocd
-            helm uninstall argo-workflows -n argocd
             helm uninstall external-secrets -n external-secrets
             helm uninstall crossplane -n crossplane-system
             helm uninstall opsbridge -n opsbridge
@@ -238,7 +208,6 @@ EOF
             helm uninstall gitlab -n opsbridge
             helm uninstall jenkins -n opsbridge
             helm uninstall sonarqube -n opsbridge
-            helm uninstall chartmuseum -n opsbridge
             ;;
         "Uninstall Kubernetes")
             echo yes | ./kk delete cluster
