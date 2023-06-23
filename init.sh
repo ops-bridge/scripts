@@ -139,6 +139,9 @@ EOF
             helm repo update
             helm upgrade --install crossplane --namespace crossplane-system --create-namespace crossplane-stable/crossplane --version 1.12.2
             ;;
+        "Install ChartMuseum")
+            helm upgrade --install chartmuseum opsbridge/chartmuseum --set env.open.DISABLE_API=false --set persistence.enabled=true --set persistence.size=20Gi --set persistence.storageClass=$storage_class --set ingress.enabled=true --set ingress.hosts[0].name=$helm_hostname --set ingress.hosts[0].tlsSecret=$ssl_secret_name --namespace opsbridge --create-namespace --wait     
+            ;;        
         "Install Database")
             helm upgrade --install postgresql opsbridge/postgresql --set global.postgresql.auth.postgresPassword=$postgresql_password --set global.storageClass=$storage_class --set global.postgresql.auth.username=opsbridge --set global.postgresql.auth.password=$postgresql_password --set image.auth.enablePostgresUser=true --set image.auth.postgresPassword=$postgresql_password --set architecture=standalone --set primary.service.type=LoadBalancer --set primary.service.loadBalancerIP=$postgresql_lb_ip --set primary.service.externalTrafficPolicy=Local --set primary.persistence.enabled=true --set primary.persistence.size="10Gi" --set primary.initdb.user=postgres --set primary.initdb.password=$postgresql_password --namespace opsbridge --create-namespace --wait
             ;;
@@ -199,6 +202,7 @@ EOF
         "Uninstall OpsBridge")
             helm uninstall external-secrets -n external-secrets
             helm uninstall crossplane -n crossplane-system
+            helm uninstall chartmuseum -n opsbridge
             helm uninstall opsbridge -n opsbridge
             helm uninstall postgresql -n opsbridge
             helm uninstall keycloak -n opsbridge
