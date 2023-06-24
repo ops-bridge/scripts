@@ -1,40 +1,47 @@
 #!/bin/bash
-echo "Please fill the required areas for AIO OpdBridge Installation"
-read -e -p "SSLSecreName: " -i "ssl-cert" ssl_secret_name
-read -e -p "StorageClass : " -i "local" storage_class
-read -e -p "RegistrySecret : " -i "registry_secret" registry_Secret
-read -e -p "MetalLB.Ingress.IP : " -i "\"10.120.60.41/32"\" metallb_ingress_ip
-read -e -p "MetalLB.PostgreSQL.IP : " -i "\"10.120.60.42/32"\" metallb_postgres_ip
-read -e -p "Registry.User : " -i "arabamdev" registry_user
-read -e -p "Registry.Password : " -i "hCTxCUCjH2ckZDF" registry_password
-read -e -p "Registry.Email : " -i "it@arabam.com" registry_user
-read -e -p "Registry.URL : " -i "https://index.docker.io/v1/" registry_url
-read -e -p "ArgoCD.URL: " -i "https://cd.tenant.com" argocd_url
-read -e -p "ArgoCD.Hostname: " -i "cd.tenant.com" argocd_hostname
-read -e -p "ArgoCD.AdminPassword: " -i "StrongPassword!@" argocd_admin_password
-read -e -p "ArgoWorkflows.Hostname: " -i "ci.tenant.com" argoflow_hostname
-read -e -p "OpsBridge.Hostname: " -i "opsbridge.tenant.com" opsbridge_hostname
-read -e -p "NginxIngress.LoadBalancerIP: " -i "10.120.60.41" nginx_ingress_lb_ip
-read -e -p "PostgreSQL.Password: " -i "StrongPassword!@" postgresql_password
-read -e -p "PostgreSQL.LoadBalancerIP: " -i "10.120.60.42" postgresql_lb_ip
-read -e -p "VaultToken: " -i "hvs.wnDB32qSs0FXqQkDBGw8AtC5" vault_token
-read -e -p "Keycloak.Password: " -i "StrongPassword!@" keycloak_password
-read -e -p "Keycloak.Hostname: " -i "accounts.tenant.com" keycloak_hostname
-read -e -p "Vault.URL: " -i "https://vault.tenant.com" vault_url
-read -e -p "Vault.Hostname: " -i "vault.tenant.com" vault_hostname
-read -e -p "Consul.Hostname: " -i "consul.tenant.com" consul_hostname
-read -e -p "Prometheus.Hostname: " -i "prometheus.tenant.com" prometheus_hostname
-read -e -p "Alertmanager.Hostname: " -i "alertmanager.tenant.com" alertmanager_hostname
-read -e -p "Gitlab.Domain: " -i "tenant.com" gitlab_domain
-read -e -p "Gitlab.Hostname: " -i "gitlab.tenant.com" gitlab_hostname
-read -e -p "Gitlab.Url: " -i "http://gitlab-webservice-default:8080" gitlab_url
-read -e -p "Jenkins.Password: " -i "StrongPassword!@" jenkins_password
-read -e -p "Jenkins.Hostname: " -i "jenkins.tenant.com" jenkins_hostname
-read -e -p "Sonarqube.Hostname: " -i "sonarqube.tenant.com" sonarqube_hostname
-read -e -p "Sonarqube.Password: " -i "StrongPassword!@" sonarqube_password
-read -e -p "Helm.Hostname: " -i "helm.tenant.com" helm_hostname
-read -e -p "Helm.Username: " -i "admin" helm_username
-read -e -p "Helm.Password: " -i "StrongPassword!@" helm_password
+# echo "Please fill the required areas for AIO OpdBridge Installation"
+# read -e -p "SSLSecreName: " -i "ssl-cert" ssl_secret_name
+# read -e -p "StorageClass : " -i "local" storage_class
+# read -e -p "RegistrySecret : " -i "registry_secret" registry_Secret
+# read -e -p "MetalLB.Ingress.IP : " -i "\"10.120.60.41/32"\" metallb_ingress_ip
+# read -e -p "MetalLB.PostgreSQL.IP : " -i "\"10.120.60.42/32"\" metallb_postgres_ip
+# read -e -p "Registry.User : " -i "arabamdev" registry_user
+# read -e -p "Registry.Password : " -i "hCTxCUCjH2ckZDF" registry_password
+# read -e -p "Registry.Email : " -i "it@arabam.com" registry_user
+# read -e -p "Registry.URL : " -i "https://index.docker.io/v1/" registry_url
+# read -e -p "ArgoCD.URL: " -i "https://cd.tenant.com" argocd_url
+# read -e -p "ArgoCD.Hostname: " -i "cd.tenant.com" argocd_hostname
+# read -e -p "ArgoCD.AdminPassword: " -i "StrongPassword!@" argocd_admin_password
+# read -e -p "ArgoWorkflows.Hostname: " -i "ci.tenant.com" argoflow_hostname
+# read -e -p "OpsBridge.Hostname: " -i "opsbridge.tenant.com" opsbridge_hostname
+# read -e -p "NginxIngress.LoadBalancerIP: " -i "10.120.60.41" nginx_ingress_lb_ip
+# read -e -p "PostgreSQL.Password: " -i "StrongPassword!@" postgresql_password
+# read -e -p "PostgreSQL.LoadBalancerIP: " -i "10.120.60.42" postgresql_lb_ip
+# read -e -p "VaultToken: " -i "hvs.wnDB32qSs0FXqQkDBGw8AtC5" vault_token
+# read -e -p "Keycloak.Password: " -i "StrongPassword!@" keycloak_password
+# read -e -p "Keycloak.Hostname: " -i "accounts.tenant.com" keycloak_hostname
+# read -e -p "Vault.URL: " -i "https://vault.tenant.com" vault_url
+# read -e -p "Vault.Hostname: " -i "vault.tenant.com" vault_hostname
+# read -e -p "Consul.Hostname: " -i "consul.tenant.com" consul_hostname
+# read -e -p "Prometheus.Hostname: " -i "prometheus.tenant.com" prometheus_hostname
+# read -e -p "Alertmanager.Hostname: " -i "alertmanager.tenant.com" alertmanager_hostname
+# read -e -p "Gitlab.Domain: " -i "tenant.com" gitlab_domain
+# read -e -p "Gitlab.Hostname: " -i "gitlab.tenant.com" gitlab_hostname
+# read -e -p "Gitlab.Url: " -i "http://gitlab-webservice-default:8080" gitlab_url
+# read -e -p "Jenkins.Password: " -i "StrongPassword!@" jenkins_password
+# read -e -p "Jenkins.Hostname: " -i "jenkins.tenant.com" jenkins_hostname
+# read -e -p "Sonarqube.Hostname: " -i "sonarqube.tenant.com" sonarqube_hostname
+# read -e -p "Sonarqube.Password: " -i "StrongPassword!@" sonarqube_password
+# read -e -p "Helm.Hostname: " -i "helm.tenant.com" helm_hostname
+# read -e -p "Helm.Username: " -i "admin" helm_username
+# read -e -p "Helm.Password: " -i "StrongPassword!@" helm_password
+git clone https://ops-bridge@github.com/ops-bridge/scripts.git
+git config --global user.email "doguspeynirci@gmail.com"
+git config –global user.name "doguspeynirci"
+cd scripts
+git fetch --all
+git pull
+source ./scripts/.env
 
 curl -O https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
 bash ./get-helm-3 
