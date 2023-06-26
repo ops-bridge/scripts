@@ -130,12 +130,13 @@ EOF
             ;;
         "Install MetalLB")
             helm upgrade --install metallb opsbridge/metallb --namespace metallb-system --create-namespace --wait
+            sleep 30
             git clone https://ops-bridge@github.com/ops-bridge/scripts.git
             cd scripts
             git fetch --all
             git pull
             yq -i '(.. | select(has("addresses")).addresses) = ['$metallb_ingress_ip','$metallb_postgres_ip']' ./metallb/config.yaml
-            kubectl apply -f ./metallb/config.yaml            
+            kubectl apply -f ./metallb/config.yaml
             ;;
         "Install LoadBalancer")
             helm upgrade --install ingress-nginx opsbridge/ingress-nginx --set controller.hostNetwork=true --set controller.hostPort.enabled=true --set controller.ingressClassResource.name=nginx --set controller.ingressClassResource.enabled=true --set controller.extraArgs.default-ssl-certificate=default/$ssl_secret_name --set controller.kind=DaemonSet --set controller.service.enabled=true --set controller.service.loadBalancerIP=$nginx_ingress_lb_ip --set controller.service.externalTrafficPolicy=Local --set controller.service.type=LoadBalancer --namespace ingress-nginx --create-namespace --wait          
