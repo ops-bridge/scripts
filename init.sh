@@ -42,6 +42,7 @@ cd scripts
 git fetch --all
 git pull
 source ./scripts/.env
+source ./.env
 
 curl -O https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
 bash ./get-helm-3 
@@ -60,14 +61,14 @@ options=("Prepare Operating System"
          "Install Database" 
          "Install OpenID" 
          "Install SD" 
-         "Install Vault"         
+         "Install Vault" 
+         "Install ExternalSecrets" 
          "Install Monitoring" 
          "Install GitOps" 
          "Install Jenkins" 
          "Install Sonar" 
          "Install OpsBridge" 
-         "Install CrossPlane Providers" 
-         "Install ExternalSecrets"          
+         "Install CrossPlane Providers"  
          "Show Gitlab Password" 
          "Show Vault Password" 
          "Add Registry Server" 
@@ -163,6 +164,16 @@ EOF
             VAULT_UNSEAL_KEY=$(cat vault-central-keys.json | jq -r ".unseal_keys_b64[]")
             kubectl exec vault-server-0 -n opsbridge -- vault operator unseal $VAULT_UNSEAL_KEY
             ;;
+        "Install ExternalSecrets")
+            helm upgrade --install external-secrets opsbridge/external-secrets --namespace external-secrets --create-namespace --wait
+            kubectl create secret generic vault-token --from-literal=token=$vault_token -n default
+            git clone https://ops-bridge@github.com/ops-bridge/scripts.git
+            cd scripts
+            git fetch --all
+            git pull
+            yq e -i '.spec.provider.vault.server = strenv(vault_url)' ./vault/clustersecretstore.yaml
+            kubectl apply -f ./vault/clustersecretstore.yaml
+            ;;            
         "Install Monitoring")
             helm upgrade --install prometheus opsbridge/prometheus --set server.baseURL=$prometheus_hostname --set server.ingress.hosts[0]=$prometheus_hostname --set server.ingress.tls[0].hosts[0]=$prometheus_hostname --set server.ingress.tls[0].secretName=$ssl_secret_name --set server.persistentVolume.enabled=true --set server.persistentVolume.size=12Gi --set server.persistentVolume.storageClass=$storage_class --set alertmanager.enabled=true --set alertmanager.persistence.size=3Gi  --set alertmanager.ingress.hosts[0].host=$alertmanager_hostname --set alertmanager.ingress.hosts[0].paths[0].path=/ --set alertmanager.ingress.hosts[0].paths[0].pathType=ImplementationSpecific --set alertmanager.ingress.tls[0].secretName=$ssl_secret_name --set alertmanager.ingress.tls[0].hosts[0]=$alertmanager_hostname --namespace opsbridge --create-namespace --wait
             ;;
@@ -182,16 +193,6 @@ EOF
             cd scripts
             kubectl apply -f ./crossplane/providers.yaml
             ;;
-        "Install ExternalSecrets")
-            helm upgrade --install external-secrets opsbridge/external-secrets --namespace external-secrets --create-namespace --wait
-            kubectl create secret generic vault-token --from-literal=token=$vault_token -n default
-            git clone https://ops-bridge@github.com/ops-bridge/scripts.git
-            cd scripts
-            git fetch --all
-            git pull
-            yq e -i '.spec.provider.vault.server = strenv(vault_url)' ./vault/clustersecretstore.yaml
-            kubectl apply -f ./vault/clustersecretstore.yaml
-            ;;            
         "Show Gitlab Password")
             kubectl get secret gitlab-gitlab-initial-root-password -ojsonpath='{.data.password}' -n opsbridge | base64 --decode ; echo
             ;;  
