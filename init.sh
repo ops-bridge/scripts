@@ -58,13 +58,13 @@ options=("Prepare Operating System"
          "Install LoadBalancer" 
          "Install CrossPlane" 
          "Install Database" 
-         "Install Keycloak" 
-         "Install Consul" 
+         "Install OpenID" 
+         "Install SD" 
          "Install Vault"         
-         "Install Prometheus" 
-         "Install GitLab" 
+         "Install Monitoring" 
+         "Install GitOps" 
          "Install Jenkins" 
-         "Install Sonarqube" 
+         "Install Sonar" 
          "Install OpsBridge" 
          "Install CrossPlane Providers" 
          "Install ExternalSecrets"          
@@ -148,10 +148,10 @@ EOF
         "Install Database")
             helm upgrade --install postgresql opsbridge/postgresql --set global.postgresql.auth.postgresPassword=$postgresql_password --set global.storageClass=$storage_class --set global.postgresql.auth.username=opsbridge --set global.postgresql.auth.password=$postgresql_password --set image.auth.enablePostgresUser=true --set image.auth.postgresPassword=$postgresql_password --set architecture=standalone --set primary.service.type=LoadBalancer --set primary.service.loadBalancerIP=$postgresql_lb_ip --set primary.service.externalTrafficPolicy=Local --set primary.persistence.enabled=true --set primary.persistence.size="10Gi" --set primary.initdb.user=postgres --set primary.initdb.password=$postgresql_password --namespace opsbridge --create-namespace --wait
             ;;
-        "Install Keycloak")
+        "Install OpenID")
             helm upgrade --install keycloak opsbridge/keycloak --set global.storageClass=$storage_class --set auth.adminUser=keycloak --set auth.adminPassword=$keycloak_password --set ingress.hostname=$keycloak_hostname --set ingress.extraTls[0].hosts[0]=$keycloak_hostname --set ingress.extraTls[0].secretName=$ssl_secret_name --set externalDatabase.host=postgresql --set externalDatabase.port=5432 --set externalDatabase.user=postgres --set externalDatabase.database=keycloak --set externalDatabase.password=$postgresql_password --namespace opsbridge --create-namespace --wait
             ;;
-        "Install Consul")
+        "Install SD")
             helm upgrade --install consul opsbridge/consul --set server.storageClass=$storage_class --set ui.ingress.hosts[0].host=$consul_hostname --set ui.ingress.tls[0].hosts[0]=$consul_hostname --set ui.ingress.tls[0].secretName=$ssl_secret_name --namespace opsbridge --create-namespace --wait
             ;;
         "Install Vault")
@@ -162,16 +162,16 @@ EOF
             VAULT_UNSEAL_KEY=$(cat vault-central-keys.json | jq -r ".unseal_keys_b64[]")
             kubectl exec vault-server-0 -n opsbridge -- vault operator unseal $VAULT_UNSEAL_KEY
             ;;
-        "Install Prometheus")
+        "Install Monitoring")
             helm upgrade --install prometheus opsbridge/prometheus --set server.baseURL=$prometheus_hostname --set server.ingress.hosts[0]=$prometheus_hostname --set server.ingress.tls[0].hosts[0]=$prometheus_hostname --set server.ingress.tls[0].secretName=$ssl_secret_name --set server.persistentVolume.enabled=true --set server.persistentVolume.size=12Gi --set server.persistentVolume.storageClass=$storage_class --set alertmanager.enabled=true --set alertmanager.persistence.size=3Gi  --set alertmanager.ingress.hosts[0].host=$alertmanager_hostname --set alertmanager.ingress.hosts[0].paths[0].path=/ --set alertmanager.ingress.hosts[0].paths[0].pathType=ImplementationSpecific --set alertmanager.ingress.tls[0].secretName=$ssl_secret_name --set alertmanager.ingress.tls[0].hosts[0]=$alertmanager_hostname --namespace opsbridge --create-namespace --wait
             ;;
-        "Install GitLab")
+        "Install GitOps")
             helm upgrade --install gitlab opsbridge/gitlab --set global.edition=ce --set global.hosts.domain=$gitlab_domain --set global.hosts.ssh.name=$gitlab_hostname --set global.hosts.gitlab.name=$gitlab_hostname --set global.hosts.minio.name=$gitlab_hostname --set global.hosts.registry.name=$gitlab_hostname --set global.hosts.kas.name=$gitlab_hostname --set global.ingress.provider=nginx --set global.ingress.class=nginx --set global.ingress.enabled=true --set global.ingress.tls.secretName=$ssl_secret_name --set certmanager.install=false --set nginx-ingress.enabled=false --set gitlab-runner.gitlabUrl=$gitlab_url --namespace opsbridge --create-namespace --wait
             ;;
         "Install Jenkins")
             helm upgrade --install jenkins opsbridge/jenkins --set controller.adminPassword=$jenkins_password --set controller.ingress.enabled=true --set controller.ingress.hostName=$jenkins_hostname --set controller.ingress.tls[0].secretName=$ssl_secret_name --set controller.ingress.tls[0].hosts[0]=$jenkins_hostname --set persistence.enabled=true --set persistence.storageClass=$storage_class --set persistence.size=16Gi --namespace opsbridge --create-namespace --wait
             ;;
-        "Install Sonarqube")
+        "Install Sonar")
             helm upgrade --install sonarqube opsbridge/sonarqube --set account.adminPassword=$sonarqube_password --set ingress.enabled=true --set ingress.hosts[0].name=$sonarqube_hostname --set ingress.ingressClassName=nginx --set ingress.tls[0].hosts[0]=$sonarqube_hostname --set ingress.tls[0].secretName=$ssl_secret_name --set persistence.enabled=true --set persistence.storageClass=$storage_class --set postgresql.persistence.storageClass=$storage_class --set persistence.size=10Gi --set jdbcOverwrite.jdbcUrl=jdbc:postgresql://postgresql-hl/sonarqube?socketTimeout=1500 --set jdbcOverwrite.jdbcPassword=$postgresql_password --namespace opsbridge --create-namespace --wait
             ;;
         "Install OpsBridge")
