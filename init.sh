@@ -211,6 +211,7 @@ EOF
         "Uninstall OpsBridge")
             helm uninstall external-secrets -n external-secrets
             helm uninstall crossplane -n crossplane-system
+            helm uninstall argocd -n argocd
             helm uninstall opsbridge -n opsbridge
             helm uninstall postgresql -n opsbridge
             helm uninstall keycloak -n opsbridge
