@@ -218,6 +218,7 @@ EOF
             helm uninstall sonarqube -n opsbridge
             ;;
         "Uninstall Kubernetes")
+            cd ../
             echo yes | ./kk delete cluster
             ;;            
         "Quit")
