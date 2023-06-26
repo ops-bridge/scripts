@@ -4,10 +4,3 @@ metadata:
   name: upbound-provider-gcp
 spec:
   package: xpkg.upbound.io/upbound/provider-gcp:v0.33.1
----
-apiVersion: pkg.crossplane.io/v1
-kind: Provider
-metadata:
-  name: upbound-provider-ansible
-spec:
-  package: xpkg.upbound.io/upbound/provider-ansible:v0.5.0
