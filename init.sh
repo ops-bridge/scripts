@@ -23,6 +23,7 @@ options=("Prepare Operating System"
          "Install MetalLB" 
          "Install LoadBalancer" 
          "Install CrossPlane" 
+         "Install CertManager" 
          "Install ArgoCD" 
          "Install Database" 
          "Install OpenID" 
@@ -113,6 +114,9 @@ EOF
             helm repo update
             helm upgrade --install crossplane --namespace crossplane-system --create-namespace crossplane-stable/crossplane --version 1.12.2
             ;;
+        "Install CertManager")
+            helm upgrade --install cert-manager opsbridge/cert-manager --namespace cert-manager --create-namespace --wait
+            ;;            
         "Install ArgoCD")
             helm upgrade --install argocd opsbridge/argo-cd --set server.url=$argocd_url --set server.ingress.enabled=true --set global.storageClass=$storage_class --set server.ingress.hostname=$argocd_hostname --set server.ingress.extraTls[0].hosts[0]=$argocd_hostname --set server.ingress.extraTls[0].secretName=$ssl_secret_name --set server.ingressClassName=nginx --set config.secret.argocdServerAdminPassword=$argocd_admin_password --namespace argocd --create-namespace --wait
             ;;            
@@ -176,6 +180,7 @@ EOF
         "Uninstall OpsBridge")
             helm uninstall external-secrets -n external-secrets
             helm uninstall crossplane -n crossplane-system
+            helm uninstall cert-manager -n cert-manager
             helm uninstall argocd -n argocd
             helm uninstall opsbridge -n opsbridge
             helm uninstall postgresql -n opsbridge
