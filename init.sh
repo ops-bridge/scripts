@@ -115,7 +115,7 @@ EOF
             helm upgrade --install crossplane --namespace crossplane-system --create-namespace crossplane-stable/crossplane --version 1.12.2
             ;;
         "Install CertManager")
-            helm upgrade --install cert-manager opsbridge/cert-manager --namespace cert-manager --create-namespace --wait
+            helm upgrade --install cert-manager opsbridge/cert-manager --set installCRDs=true --namespace cert-manager --create-namespace
             ;;            
         "Install ArgoCD")
             helm upgrade --install argocd opsbridge/argo-cd --set server.url=$argocd_url --set server.ingress.enabled=true --set global.storageClass=$storage_class --set server.ingress.hostname=$argocd_hostname --set server.ingress.extraTls[0].hosts[0]=$argocd_hostname --set server.ingress.extraTls[0].secretName=$ssl_secret_name --set server.ingressClassName=nginx --set config.secret.argocdServerAdminPassword=$argocd_admin_password --namespace argocd --create-namespace --wait
