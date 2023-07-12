@@ -22,20 +22,10 @@ options=("Prepare Operating System"
          "Install Kubernetes" 
          "Install MetalLB" 
          "Install LoadBalancer" 
-         "Install CrossPlane" 
-         "Install CertManager" 
          "Install ArgoCD" 
          "Install Database" 
-         "Install OpenID" 
-         "Install SD" 
-         "Install Vault" 
-         "Install ExternalSecrets" 
-         "Install Monitoring" 
          "Install GitOps" 
-         "Install Jenkins" 
-         "Install Sonar" 
          "Install OpsBridge" 
-         "Install CrossPlane Providers"  
          "Show Gitlab Password" 
          "Show Vault Password" 
          "Add Registry Server" 
@@ -109,88 +99,39 @@ EOF
         "Install LoadBalancer")
             helm upgrade --install ingress-nginx opsbridge/ingress-nginx --set controller.hostNetwork=true --set controller.hostPort.enabled=true --set controller.ingressClassResource.name=nginx --set controller.ingressClassResource.enabled=true --set controller.extraArgs.default-ssl-certificate=default/$ssl_secret_name --set controller.kind=DaemonSet --set controller.service.enabled=true --set controller.service.loadBalancerIP=$nginx_ingress_lb_ip --set controller.service.externalTrafficPolicy=Local --set controller.service.type=LoadBalancer --namespace ingress-nginx --create-namespace --wait          
             ;;
-        "Install CrossPlane")
-            helm repo add crossplane-stable https://charts.crossplane.io/stable
-            helm repo update
-            helm upgrade --install crossplane --namespace crossplane-system --create-namespace crossplane-stable/crossplane --version 1.12.2
-            ;;
-        "Install CertManager")
-            helm upgrade --install cert-manager opsbridge/cert-manager --set installCRDs=true --namespace cert-manager --create-namespace
-            ;;            
         "Install ArgoCD")
             helm upgrade --install argocd opsbridge/argo-cd --set server.url=$argocd_url --set server.ingress.enabled=true --set global.storageClass=$storage_class --set server.ingress.hostname=$argocd_hostname --set server.ingress.extraTls[0].hosts[0]=$argocd_hostname --set server.ingress.extraTls[0].secretName=$ssl_secret_name --set server.ingressClassName=nginx --set config.secret.argocdServerAdminPassword=$argocd_admin_password --namespace argocd --create-namespace --wait
-            ;;            
+            ;;
         "Install Database")
             helm upgrade --install postgresql opsbridge/postgresql --set global.postgresql.auth.postgresPassword=$postgresql_password --set global.storageClass=$storage_class --set global.postgresql.auth.username=opsbridge --set global.postgresql.auth.password=$postgresql_password --set image.auth.enablePostgresUser=true --set image.auth.postgresPassword=$postgresql_password --set architecture=standalone --set primary.service.type=LoadBalancer --set primary.service.loadBalancerIP=$postgresql_lb_ip --set primary.service.externalTrafficPolicy=Local --set primary.persistence.enabled=true --set primary.persistence.size="10Gi" --set primary.initdb.user=postgres --set primary.initdb.password=$postgresql_password --namespace opsbridge --create-namespace --wait
-            ;;
-        "Install OpenID")
-            helm upgrade --install keycloak opsbridge/keycloak --set global.storageClass=$storage_class --set auth.adminUser=keycloak --set auth.adminPassword=$keycloak_password --set ingress.hostname=$keycloak_hostname --set ingress.extraTls[0].hosts[0]=$keycloak_hostname --set ingress.extraTls[0].secretName=$ssl_secret_name --set externalDatabase.host=postgresql --set externalDatabase.port=5432 --set externalDatabase.user=postgres --set externalDatabase.database=keycloak --set externalDatabase.password=$postgresql_password --namespace opsbridge --create-namespace --wait
-            ;;
-        "Install SD")
-            helm upgrade --install consul opsbridge/consul --set server.storageClass=$storage_class --set ui.ingress.hosts[0].host=$consul_hostname --set ui.ingress.tls[0].hosts[0]=$consul_hostname --set ui.ingress.tls[0].secretName=$ssl_secret_name --namespace opsbridge --create-namespace --wait
-            ;;
-        "Install Vault")
-            helm upgrade --install vault opsbridge/vault --set global.storageClass=$storage_class --set server.ingress.extraTls[0].hosts[0]=$vault_hostname --set server.ingress.extraTls[0].secretName=$ssl_secret_name --set server.ingress.hostname=$vault_hostname --namespace opsbridge --create-namespace
-            sleep 30
-            kubectl exec vault-server-0 -n opsbridge -- vault operator init -key-shares=1 -key-threshold=1 -format=json > vault-central-keys.json
-            cat vault-central-keys.json | jq -r ".unseal_keys_b64[]"
-            VAULT_UNSEAL_KEY=$(cat vault-central-keys.json | jq -r ".unseal_keys_b64[]")
-            kubectl exec vault-server-0 -n opsbridge -- vault operator unseal $VAULT_UNSEAL_KEY
-            ;;
-        "Install ExternalSecrets")
-            helm upgrade --install external-secrets opsbridge/external-secrets --namespace external-secrets --create-namespace --wait
-            # kubectl create secret generic vault-token --from-literal=token=$vault_token -n default
-            # git clone https://ops-bridge@github.com/ops-bridge/scripts.git
-            # cd scripts
-            # git fetch --all
-            # git pull
-            # yq e -i '.spec.provider.vault.server = strenv(vault_url)' ./vault/clustersecretstore.yaml
-            # kubectl apply -f ./vault/clustersecretstore.yaml
-            ;;            
-        "Install Monitoring")
-            helm upgrade --install prometheus opsbridge/prometheus --set server.baseURL=$prometheus_hostname --set server.ingress.hosts[0]=$prometheus_hostname --set server.ingress.tls[0].hosts[0]=$prometheus_hostname --set server.ingress.tls[0].secretName=$ssl_secret_name --set server.persistentVolume.enabled=true --set server.persistentVolume.size=12Gi --set server.persistentVolume.storageClass=$storage_class --set alertmanager.enabled=true --set alertmanager.persistence.size=3Gi  --set alertmanager.ingress.hosts[0].host=$alertmanager_hostname --set alertmanager.ingress.hosts[0].paths[0].path=/ --set alertmanager.ingress.hosts[0].paths[0].pathType=ImplementationSpecific --set alertmanager.ingress.tls[0].secretName=$ssl_secret_name --set alertmanager.ingress.tls[0].hosts[0]=$alertmanager_hostname --namespace opsbridge --create-namespace --wait
             ;;
         "Install GitOps")
             helm upgrade --install gitlab opsbridge/gitlab --set global.edition=ce --set global.hosts.domain=$gitlab_domain --set global.hosts.ssh.name=$gitlab_hostname --set global.hosts.gitlab.name=$gitlab_hostname --set global.hosts.minio.name=$gitlab_hostname --set global.hosts.registry.name=$gitlab_hostname --set global.hosts.kas.name=$gitlab_hostname --set global.ingress.provider=nginx --set global.ingress.class=nginx --set global.ingress.enabled=true --set global.ingress.tls.secretName=$ssl_secret_name --set certmanager.install=false --set nginx-ingress.enabled=false --set gitlab-runner.gitlabUrl=$gitlab_url --namespace opsbridge --create-namespace --wait
             ;;
-        "Install Jenkins")
-            helm upgrade --install jenkins opsbridge/jenkins --set controller.adminPassword=$jenkins_password --set controller.ingress.enabled=true --set controller.ingress.hostName=$jenkins_hostname --set controller.ingress.tls[0].secretName=$ssl_secret_name --set controller.ingress.tls[0].hosts[0]=$jenkins_hostname --set persistence.enabled=true --set persistence.storageClass=$storage_class --set persistence.size=16Gi --namespace opsbridge --create-namespace --wait
-            ;;
-        "Install Sonar")
-            helm upgrade --install sonarqube opsbridge/sonarqube --set account.adminPassword=$sonarqube_password --set ingress.enabled=true --set ingress.hosts[0].name=$sonarqube_hostname --set ingress.ingressClassName=nginx --set ingress.tls[0].hosts[0]=$sonarqube_hostname --set ingress.tls[0].secretName=$ssl_secret_name --set persistence.enabled=true --set persistence.storageClass=$storage_class --set postgresql.persistence.storageClass=$storage_class --set persistence.size=10Gi --set jdbcOverwrite.jdbcUrl=jdbc:postgresql://postgresql-hl/sonarqube?socketTimeout=1500 --set jdbcOverwrite.jdbcPassword=$postgresql_password --namespace opsbridge --create-namespace --wait
-            ;;
         "Install OpsBridge")
             helm upgrade --install opsbridge opsbridge/opsbridge --set server.ingress.enabled=true --set server.ingress.hostname=$opsbridge_hostname --set server.ingress.tls[0].hosts[0]=$opsbridge_hostname --set server.ingress.tls[0].secretName=$ssl_secret_name --set server.ingressClassName=nginx --namespace opsbridge --create-namespace --wait
             ;;
-        "Install CrossPlane Providers")
-            cd scripts
-            kubectl apply -f ./crossplane/providers.yaml
-            ;;
         "Show Gitlab Password")
             kubectl get secret gitlab-gitlab-initial-root-password -ojsonpath='{.data.password}' -n opsbridge | base64 --decode ; echo
-            ;;  
+            ;;
         "Show Vault Password")
+            kubectl exec vault-server-0 -n infrastructure -- vault operator init -key-shares=1 -key-threshold=1 -format=json > vault-central-keys.json
+            cat vault-central-keys.json | jq -r ".unseal_keys_b64[]"
+            VAULT_UNSEAL_KEY=$(cat vault-central-keys.json | jq -r ".unseal_keys_b64[]")
+            kubectl exec vault-server-0 -n infrastructure -- vault operator unseal $VAULT_UNSEAL_KEY
             cat vault-central-keys.json | jq -r ".root_token"
             ;;  
         "Add Registry Server")
             kubectl --namespace default create secret docker-registry registry-secret --docker-server='$registry_url' --docker-username='$registry_username' --docker-password='$registry_password' --docker-email='$registry_email'
             kubectl --namespace opsbridge create secret docker-registry registry-secret --docker-server='$registry_url' --docker-username='$registry_username' --docker-password='$registry_password' --docker-email='$registry_email'
-            kubectl --namespace argocd create secret docker-registry registry-secret --docker-server='$registry_url' --docker-username='$registry_username' --docker-password='$registry_password' --docker-email='$registry_email'            
+            kubectl --namespace argocd create secret docker-registry registry-secret --docker-server='$registry_url' --docker-username='$registry_username' --docker-password='$registry_password' --docker-email='$registry_email'
             ;;  
         "Uninstall OpsBridge")
-            helm uninstall external-secrets -n external-secrets
-            helm uninstall crossplane -n crossplane-system
-            helm uninstall cert-manager -n cert-manager
             helm uninstall argocd -n argocd
             helm uninstall opsbridge -n opsbridge
             helm uninstall postgresql -n opsbridge
             helm uninstall keycloak -n opsbridge
-            helm uninstall consul -n opsbridge
-            helm uninstall vault -n opsbridge
-            helm uninstall prometheus -n opsbridge
             helm uninstall gitlab -n opsbridge
-            helm uninstall jenkins -n opsbridge
-            helm uninstall sonarqube -n opsbridge
             ;;
         "Uninstall Kubernetes")
             cd ../
